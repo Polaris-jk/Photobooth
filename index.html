@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Tu.Photobooth · เวอร์ชัน 2 -->
+<!-- Tu.Photobooth · เวอร์ชัน 2.2 -->
 <html lang="th">
 <head>
 <meta charset="utf-8">
@@ -16,8 +16,8 @@
 <meta property="og:image" content="https://polaris-jk.github.io/Photobooth/icons/icon-512.png">
 <title>Tu.Photobooth</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
-<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=3">
+<link rel="apple-touch-icon" href="icons/icon-180.png?v=3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chonburi&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Mali:wght@400&display=swap">
@@ -151,6 +151,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
 .litflash{position:fixed;inset:0;z-index:40;background:#fff;opacity:0;pointer-events:none;transition:opacity .35s}
 .litflash.on{opacity:1;transition:none}
 #camHint{max-width:26em;text-align:center;color:var(--muted)}
+#camHint:empty{display:none}
 #sCam .panel{margin-top:auto}
 
 /* ---------- แผงตัวเลือก ---------- */
@@ -219,7 +220,11 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 66px);z-index:45;max-width:calc(100% - 40px);padding:12px 18px;border-radius:14px;background:var(--ink);color:#fff;font-size:14px;line-height:1.5;box-shadow:0 10px 30px rgba(0,0,0,.25);transform:translate(-50%,-30px);opacity:0;visibility:hidden;transition:transform .45s var(--spring),opacity .25s,visibility 0s .45s;pointer-events:none}
 .toast.on{transform:translate(-50%,0);opacity:1;visibility:visible;transition:transform .45s var(--spring),opacity .2s,visibility 0s}
 
-@media (max-height:680px){.thumbs{height:38px}#camHint{display:none}}
+.banner{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);z-index:47;display:flex;align-items:center;gap:10px;width:max-content;max-width:calc(100% - 24px);padding:7px 6px 7px 16px;border-radius:16px;background:var(--ink);color:#fff;font-size:14px;line-height:1.4;box-shadow:0 12px 30px rgba(0,0,0,.28);transform:translateX(-50%);animation:bannerIn .45s var(--spring) both}
+@keyframes bannerIn{from{transform:translate(-50%,-140%)}to{transform:translate(-50%,0)}}
+.btn-sm{min-height:34px;padding:0 14px;font-size:14px;box-shadow:none;flex:0 0 auto}
+.banner-x{width:30px;height:30px;font-size:20px;line-height:1;color:rgba(255,255,255,.7);flex:0 0 auto}
+@media (max-height:680px){.thumbs{height:38px}}
 @media (max-width:360px){.seg button,.tabs button{padding:0 10px}}
 @media (prefers-reduced-motion:reduce){
   .screen.on,.sample,.result.deliver .print,.count.pop,.flash.go,.rec i,.item.pop,.thumbs li.done,.lightbox{animation:none}
@@ -236,7 +241,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
       <div class="slot"></div>
       <div class="mouth"><div class="sample"><i></i><i></i><i></i><i></i><b id="sampleTitle">Tu.Photobooth</b></div></div>
     </div>
-    <p class="lead">ถ่ายต่อกันได้ 1–4 ใบ ได้ทั้งรูปและคลิปที่ขยับได้ บันทึกลงเครื่องได้ทันที รูปทั้งหมดอยู่ในเครื่องคุณ ไม่มีการอัปโหลด</p>
+    <p class="lead">ถ่ายได้ 1–4 รูป ได้ทั้งรูปทั้งคลิป เซฟลงเครื่องได้เลย</p>
     <button class="btn btn-paper btn-xl" id="btnOpen" type="button">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2.3l1.4-2h7.6l1.4 2h2.3A1.5 1.5 0 0 1 21 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z"/><circle cx="12" cy="13" r="3.6"/></svg>
       เปิดกล้อง
@@ -306,6 +311,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
 </div>
 <div class="curtain" id="curtain" aria-hidden="true"><i class="cl"></i><i class="cr"></i><b>Tu.Photobooth<small>กำลังเปิดกล้อง</small></b></div>
 <div class="litflash" id="litFlash" aria-hidden="true"></div>
+<div class="banner" id="banner" role="status" hidden><span id="bannerText"></span><button class="btn btn-paper btn-sm" id="bannerBtn" type="button"></button><button class="banner-x" id="bannerClose" type="button" aria-label="ปิด">×</button></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -329,7 +335,13 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     sound: true,               // เสียงบี๊บนับถอยหลังและเสียงชัตเตอร์
     photoQuality: 0.92,        // คุณภาพไฟล์ JPG (0–1)
     clipBitrate: 6000000,      // บิตเรตคลิป (บิตต่อวินาที)
+    goatcounter: '',           // รหัส GoatCounter เช่น 'tuphotobooth' ใส่แล้วจะนับคนเข้าและจำนวนการบันทึก (ว่างไว้ = ปิด)
   };
+
+  /* เลขเวอร์ชัน: ทุกครั้งที่อัปเดต ให้เปลี่ยนตรงนี้และใน version.json ให้ตรงกัน
+     ICON_VERSION: เพิ่มเมื่อเปลี่ยนไอคอน คนที่เพิ่มแอพไว้บนหน้าจอโฮมจะได้รับคำแนะนำให้เพิ่มใหม่ */
+  const APP_VERSION = '2.2.0';
+  const ICON_VERSION = 3;
 
   /* ---------- รูปแบบเฟรม ---------- */
   const LAYOUTS = [
@@ -868,7 +880,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     btnSavePhoto: $('btnSavePhoto'), btnSaveClip: $('btnSaveClip'), clipProg: $('clipProg'), clipLabel: $('clipLabel'),
     saveHint: $('saveHint'), panelRes: $('panelRes'), btnAgain: $('btnAgain'),
     lightbox: $('lightbox'), lbBody: $('lbBody'), lbClose: $('lbClose'),
-    curtain: $('curtain'), toast: $('toast'),
+    curtain: $('curtain'), toast: $('toast'), banner: $('banner'), bannerText: $('bannerText'), bannerBtn: $('bannerBtn'), bannerClose: $('bannerClose'),
     theme: document.querySelector('meta[name="theme-color"]'),
   };
 
@@ -1056,6 +1068,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     if (el.theme) el.theme.setAttribute('content', '#2340c8');
     window.scrollTo(0, 0);
     requestAnimationFrame(() => { panels.forEach(moveInk); });
+    if (name === 'result') { if (bannerKind === 'update') hideBanner(); } else offerUpdate();
   }
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   async function curtainClose() {
@@ -1284,12 +1297,12 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     const n = e && e.name;
     if (n === 'NotAllowedError' || n === 'SecurityError') {
       return IS_IOS
-        ? 'ยังไม่ได้อนุญาตให้ใช้กล้อง แตะ “aA” ที่แถบที่อยู่เว็บ > การตั้งค่าเว็บไซต์ > กล้อง เลือก “อนุญาต” แล้วกดเปิดกล้องอีกครั้ง'
-        : 'ยังไม่ได้อนุญาตให้ใช้กล้อง แตะไอคอนกล้องหรือแม่กุญแจที่แถบที่อยู่เว็บเพื่ออนุญาต แล้วกดเปิดกล้องอีกครั้ง';
+        ? 'ยังไม่ได้อนุญาตกล้อง แตะ aA ที่ช่องที่อยู่เว็บ > การตั้งค่าเว็บไซต์ > กล้อง > อนุญาต'
+        : 'ยังไม่ได้อนุญาตกล้อง แตะไอคอนกล้องตรงช่องที่อยู่เว็บ แล้วกดอนุญาต';
     }
-    if (n === 'NotFoundError' || n === 'OverconstrainedError') return 'ไม่พบกล้องในเครื่องนี้ ยังเลือกรูปจากอัลบั้มได้';
-    if (n === 'NotReadableError' || n === 'AbortError') return 'กล้องถูกแอพอื่นใช้อยู่ ปิดแอพนั้นแล้วกดเปิดกล้องอีกครั้ง';
-    return 'เปิดกล้องไม่สำเร็จ (' + (n || 'ไม่ทราบสาเหตุ') + ') ลองรีเฟรชหน้าแล้วกดเปิดกล้องอีกครั้ง';
+    if (n === 'NotFoundError' || n === 'OverconstrainedError') return 'ไม่เจอกล้อง เลือกรูปจากอัลบั้มแทนได้';
+    if (n === 'NotReadableError' || n === 'AbortError') return 'แอพอื่นใช้กล้องอยู่ ปิดแอพนั้นก่อนแล้วลองใหม่';
+    return 'เปิดกล้องไม่ได้ ลองรีเฟรชดู';
   }
   function stopStream() {
     if (state.stream) { state.stream.getTracks().forEach((t) => t.stop()); state.stream = null; }
@@ -1438,8 +1451,8 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
   }
 
   /* ---------- หน้ากล้อง ---------- */
-  const HINT_IDLE = 'นี่คือตัวอย่างรูปที่จะได้ กดปุ่มแดงเพื่อถ่าย หรือเลือกรูปจากอัลบั้ม';
-  const HINT_SHOOT = 'กดปุ่มอีกครั้งถ้าต้องการหยุด';
+  const HINT_IDLE = '';
+  const HINT_SHOOT = '';
   const setStatus = (t) => { el.status.textContent = t; };
   const setCamHint = (t) => { el.camHint.textContent = t; };
   function setTimerLabel() {
@@ -1559,11 +1572,12 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     grabCv.width = Math.round(g.slotW * CLIP_SCALE);
     grabCv.height = Math.round(g.slotH * CLIP_SCALE);
     state.session = s;
+    if (bannerKind === 'update') hideBanner();
     setShooting(true);
     clearThumbs();
     if (state.flash) {
       if (state.facing === 'environment') {
-        if (!torchSupported() || !(await setTorch(true))) toast('เครื่องนี้เปิดไฟแฟลชจากเว็บไม่ได้ ถ่ายต่อแบบไม่มีแฟลช');
+        if (!torchSupported() || !(await setTorch(true))) toast('เครื่องนี้เปิดแฟลชจากเว็บไม่ได้');
         else s.torch = true;
       } else {
         s.screenFlash = true;
@@ -1585,6 +1599,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
       if (s.cancelled) throw CANCEL;
       state.session = null;
       setShooting(false);
+      track('shoot-' + g.id);
       showResult({ source: 'camera', layout: g.id, shots: s.shots, frames: s.frames.map((l) => l.filter((fr) => fr.b)), date: s.date });
     } catch (e) {
       flashOff();
@@ -1592,7 +1607,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
       setShooting(false);
       clearThumbs();
       s.shots.forEach((c) => { if (c) { c.width = 0; c.height = 0; } });
-      if (e !== CANCEL) { console.error(e); setCamHint('เกิดข้อผิดพลาดระหว่างถ่าย กดปุ่มแดงเพื่อเริ่มใหม่'); }
+      if (e !== CANCEL) { console.error(e); setCamHint('ถ่ายไม่สำเร็จ ลองใหม่อีกที'); }
     }
   }
 
@@ -1612,7 +1627,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
       const alt = LAYOUTS.find((l) => l.count === files.length && l.kind === g.kind) || LAYOUTS.find((l) => l.count === files.length);
       setCamLayout(alt.id);
       g = geo();
-      toast(`เลือกมา ${files.length} รูป เลยใช้แบบ${alt.name} ${files.length} รูป`);
+      toast(`เลือกมา ${files.length} รูป เลยเปลี่ยนเป็นแบบ${alt.name} ${files.length} รูป`);
     } else if (files.length > g.count) {
       toast(`ใช้ ${g.count} รูปแรกที่เลือก`);
     }
@@ -1623,13 +1638,14 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     try {
       for (const file of files.slice(0, g.count)) {
         const img = await loadImageFile(file);
-        if (!img || !img.naturalWidth) { toast('เปิดรูปบางรูปไม่ได้ ลองเลือกรูปอื่น'); return; }
+        if (!img || !img.naturalWidth) { toast('มีรูปที่เปิดไม่ได้ ลองรูปอื่นนะ'); return; }
         const c = document.createElement('canvas');
         c.width = g.slotW; c.height = g.slotH;
         drawCover(c.getContext('2d'), img, img.naturalWidth, img.naturalHeight, g.slotW, g.slotH, false);
         shots.push(c);
       }
       await fontsReady;
+      track('album-' + g.id);
       showResult({ source: 'album', layout: g.id, shots, frames: null, date: new Date() });
     } finally {
       el.btnAlbum.disabled = false;
@@ -1671,8 +1687,8 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     r.stillJob.then(() => { if (state.result === r) requestAnimationFrame(() => el.result.classList.add('deliver')); });
   }
   function saveHintText(r) {
-    const base = IS_IOS ? 'บน iPhone/iPad กดบันทึกแล้วเลือก “บันทึกภาพ” หรือ “บันทึกวิดีโอ” เพื่อเก็บลงแอพรูปภาพ' : 'ไฟล์จะถูกบันทึกไว้ในโฟลเดอร์ดาวน์โหลดของเครื่อง';
-    return r.source === 'album' ? base + ' รูปจากอัลบั้มบันทึกได้เฉพาะไฟล์รูป' : base;
+    const base = IS_IOS ? 'กดบันทึกแล้วเลือก “บันทึกภาพ” หรือ “บันทึกวิดีโอ”' : 'ไฟล์จะอยู่ในโฟลเดอร์ดาวน์โหลด';
+    return base;
   }
   function sizePrint() {
     const r = state.result;
@@ -1965,6 +1981,75 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     el.lightbox.hidden = true;
   }
 
+  /* ---------- แจ้งเวอร์ชันใหม่ (แจ้งเฉพาะคนที่ยังเปิดเวอร์ชันเก่าอยู่) ---------- */
+  const STANDALONE = navigator.standalone === true || !!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  let bannerAction = null, bannerKind = '', latestVersion = '', dismissedVersion = '', lastCheck = 0;
+  function showBanner(kind, text, label, action) {
+    el.bannerText.textContent = text;
+    el.bannerBtn.textContent = label;
+    bannerAction = action;
+    bannerKind = kind;
+    el.banner.hidden = false;
+  }
+  function hideBanner() {
+    const was = bannerKind;
+    el.banner.hidden = true; bannerAction = null; bannerKind = '';
+    if (was === 'icon') offerUpdate();
+  }
+  function newer(a, b) {
+    const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number);
+    for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d > 0; }
+    return false;
+  }
+  function offerUpdate() {
+    // ไม่เด้งระหว่างถ่ายหรือตอนมีรูปที่ยังไม่บันทึก
+    if (!latestVersion || latestVersion === dismissedVersion || state.session || state.screen === 'result' || bannerKind === 'icon') return;
+    showBanner('update', 'มีเวอร์ชันใหม่แล้ว', STANDALONE ? 'อัปเดต' : 'รีเฟรช', () => {
+      location.replace(location.pathname + '?v=' + encodeURIComponent(latestVersion) + '.' + Date.now().toString(36));
+    });
+  }
+  async function checkUpdate() {
+    if (Date.now() - lastCheck < 5 * 60 * 1000) return;
+    lastCheck = Date.now();
+    try {
+      const res = await fetch('version.json?t=' + Date.now(), { cache: 'no-store' });
+      if (!res.ok) return;
+      const info = await res.json();
+      if (info && info.version && newer(info.version, APP_VERSION)) { latestVersion = info.version; offerUpdate(); }
+    } catch (e) { /* ออฟไลน์ก็ข้าม */ }
+  }
+  // คนที่เพิ่มแอพไว้บนหน้าจอโฮมก่อนเปลี่ยนไอคอน: บอกครั้งเดียวว่าต้องเพิ่มใหม่ถึงจะได้ไอคอนใหม่
+  // (Android อัปเดตไอคอนเองได้ เลยบอกเฉพาะ iPhone/iPad)
+  function iconTip() {
+    if (!STANDALONE || !IS_IOS) return;
+    let returning = false;
+    try { returning = Object.keys(localStorage).some((k) => (k.indexOf('pb.') === 0 || k.indexOf('pb2.') === 0) && k !== 'pb2.iconSeen'); } catch (e) { /* ข้าม */ }
+    const seen = store.get('iconSeen', null);
+    const show = (seen === null && returning) || (seen !== null && seen < ICON_VERSION);
+    store.set('iconSeen', ICON_VERSION);
+    if (show) showBanner('icon', 'ไอคอนเปลี่ยนแล้ว ลบไอคอนเดิมแล้วเพิ่มลงหน้าจอโฮมใหม่ได้เลย', 'โอเค', hideBanner);
+  }
+  function cleanUrl() {
+    try {
+      const u = new URL(location.href);
+      if (u.searchParams.has('v')) { u.searchParams.delete('v'); history.replaceState(null, '', u.pathname + u.search + u.hash); }
+    } catch (e) { /* ข้าม */ }
+  }
+
+  /* ---------- นับจำนวนคนใช้ (GoatCounter ไม่ใช้คุกกี้ ไม่ส่งรูปไปไหน) ---------- */
+  function initStats() {
+    if (!CONFIG.goatcounter) return;
+    const sc = document.createElement('script');
+    sc.async = true;
+    sc.src = 'https://gc.zgo.at/count.js';
+    sc.dataset.goatcounter = `https://${CONFIG.goatcounter}.goatcounter.com/count`;
+    document.head.appendChild(sc);
+  }
+  function track(name) {
+    if (!CONFIG.goatcounter) return;
+    try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: name, title: name, event: true }); } catch (e) { /* ข้าม */ }
+  }
+
   /* ---------- กันจอดับ ---------- */
   let wakeLock = null;
   async function keepAwake() {
@@ -1975,7 +2060,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
   /* ---------- ผูกปุ่ม ---------- */
   el.btnOpen.addEventListener('click', async () => {
     initAudio();
-    if (!window.isSecureContext) { el.startMsg.textContent = 'ต้องเปิดผ่านลิงก์ https เช่น GitHub Pages กล้องถึงจะทำงาน'; return; }
+    if (!window.isSecureContext) { el.startMsg.textContent = 'ต้องเปิดผ่านลิงก์ https กล้องถึงจะทำงาน'; return; }
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { el.startMsg.textContent = 'เบราว์เซอร์นี้เปิดกล้องไม่ได้ ลองเปิดลิงก์นี้ใน Safari หรือ Chrome'; return; }
     el.btnOpen.disabled = true;
     el.startMsg.textContent = '';
@@ -1987,7 +2072,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
         // ไม่มีกล้อง: ยังเข้าตู้ไปเลือกรูปจากอัลบั้มได้
         go('cam');
         el.btnShoot.disabled = true;
-        setCamHint('ไม่พบกล้องในเครื่องนี้ เลือกรูปจากอัลบั้มได้');
+        setCamHint('ไม่เจอกล้อง เลือกรูปจากอัลบั้มได้');
         await nextFrame();
         await curtainOpen();
         el.btnOpen.disabled = false;
@@ -2002,6 +2087,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     setStatus(readyText());
     startPreview();
     keepAwake();
+    track('open-camera');
     await nextFrame();
     await curtainOpen();
     el.btnOpen.disabled = false;
@@ -2012,7 +2098,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     state.flash = !state.flash;
     store.set('flash', state.flash);
     setFlashLabel();
-    if (state.flash) toast(state.facing === 'environment' ? (torchSupported() ? 'จะเปิดไฟแฟลชค้างไว้ตอนถ่าย' : 'เครื่องนี้เปิดไฟแฟลชจากเว็บไม่ได้') : 'กล้องหน้าใช้จอขาวเป็นแฟลช เร่งความสว่างจอให้สุดจะยิ่งสว่าง');
+    if (state.flash) toast(state.facing === 'environment' ? (torchSupported() ? 'เปิดแฟลชค้างไว้ตอนถ่าย' : 'เครื่องนี้เปิดแฟลชจากเว็บไม่ได้') : 'กล้องหน้าใช้จอขาวแทนแฟลช เร่งความสว่างจอไว้ด้วยนะ');
   });
   el.btnTimer.addEventListener('click', () => {
     const i = CONFIG.timers.indexOf(state.timer);
@@ -2026,18 +2112,18 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     el.fileInput.value = '';
     if (files.length) importAlbum(files);
   });
-  el.btnSavePhoto.addEventListener('click', () => { const r = state.result; if (r && r.photoFile) saveFile(r.photoFile); });
+  el.btnSavePhoto.addEventListener('click', () => { const r = state.result; if (r && r.photoFile) { track('save-photo'); saveFile(r.photoFile); } });
   el.btnSaveClip.addEventListener('click', () => {
     const r = state.result;
     if (!r) return;
     const st = el.btnSaveClip.dataset.state;
     if (st === 'failed') { enc.types = undefined; scheduleEncode(0); return; }
-    if (st === 'ready' && r.clipFile) saveFile(r.clipFile);
+    if (st === 'ready' && r.clipFile) { track('save-clip'); saveFile(r.clipFile); }
   });
   el.btnAgain.addEventListener('click', () => {
     const r = state.result;
     if (r && !r.saved && !againTimer) {
-      el.btnAgain.textContent = 'แตะอีกครั้ง รูปชุดนี้จะหายไป';
+      el.btnAgain.textContent = 'แตะอีกที รูปนี้จะหายไป';
       againTimer = setTimeout(resetAgain, 3500);
       return;
     }
@@ -2061,11 +2147,14 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
       if (enc.rec) { cancelEncode(); enc.needed = true; setClipState('wait'); }
     } else {
       keepAwake();
+      checkUpdate();
       if (state.screen === 'cam') resumeCamera();
       if (enc.needed && state.result) { enc.needed = false; scheduleEncode(300); }
     }
   });
   window.addEventListener('resize', () => { sizePrint(); panels.forEach(moveInk); });
+  el.bannerBtn.addEventListener('click', () => { const a = bannerAction; if (a) a(); });
+  el.bannerClose.addEventListener('click', () => { if (latestVersion) dismissedVersion = latestVersion; hideBanner(); });
 
   /* ---------- เริ่มต้น ---------- */
   el.sampleTitle.textContent = CONFIG.title;
@@ -2080,10 +2169,15 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
   setFlashLabel();
   setStatus(readyText());
   setCamHint(HINT_IDLE);
-  if (IN_APP) el.startMsg.textContent = 'เปิดจากในแอพอยู่ กล้องหรือการบันทึกไฟล์อาจใช้ไม่ได้ แตะเมนู ⋯ แล้วเลือกเปิดในเบราว์เซอร์';
+  if (IN_APP) el.startMsg.textContent = 'เปิดในแอพแชตอยู่ อาจใช้กล้องไม่ได้ แตะ ⋯ แล้วเลือกเปิดในเบราว์เซอร์';
+
+  cleanUrl();
+  initStats();
+  iconTip();
+  setTimeout(checkUpdate, 1500);
 
   // ไว้ใช้ทดสอบ: ดูสถานะได้จาก DevTools
-  window.__photobooth = { CONFIG, state, GEO, LAYOUTS, STYLES, FILTERS, HAS_FX };
+  window.__photobooth = { CONFIG, state, GEO, LAYOUTS, STYLES, FILTERS, HAS_FX, APP_VERSION };
 })();
 </script>
 </body>
