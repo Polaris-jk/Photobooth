@@ -1,0 +1,16 @@
+{
+  "name": "Tu.Photobooth",
+  "short_name": "Tu.Photobooth",
+  "description": "ตู้ถ่ายรูปบนเว็บ ถ่ายต่อกัน 1–4 รูป ได้ทั้งรูปและคลิปที่ขยับได้",
+  "lang": "th",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#2340c8",
+  "theme_color": "#2340c8",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
