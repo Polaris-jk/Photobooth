@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<!-- ตู้ถ่ายรูป 4 ช็อต · เวอร์ชัน 1 -->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2340c8">
+<meta name="description" content="ตู้ถ่ายรูปบนเว็บ ถ่ายต่อกัน 4 ใบ ได้แถบรูปและคลิปที่ขยับได้ บันทึกลงเครื่องได้ทันที">
+<meta property="og:title" content="ตู้ถ่ายรูป 4 ช็อต">
+<meta property="og:description" content="ถ่ายต่อกัน 4 ใบ ได้แถบรูปและคลิปที่ขยับได้ บันทึกลงเครื่องได้ทันที">
+<title>ตู้ถ่ายรูป</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232340c8'/%3E%3Crect x='11' y='4' width='10' height='24' fill='%23fff'/%3E%3Crect x='12.5' y='5.5' width='7' height='4.6' fill='%23c3cbe8'/%3E%3Crect x='12.5' y='11.3' width='7' height='4.6' fill='%23c3cbe8'/%3E%3Crect x='12.5' y='17.1' width='7' height='4.6' fill='%23c3cbe8'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chonburi&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap">
+<style>
+:root{
+  --cobalt:#2340c8;   /* ผ้าม่านตู้ (นอกตู้) */
+  --ink:#0f1b4d;      /* หมึกน้ำเงินเข้ม */
+  --paper:#fff;       /* ในตู้ = สว่าง ช่วยส่องหน้า */
+  --mist:#eceff7;
+  --muted:#5d6890;
+  --shoot:#f2385a;    /* ปุ่มถ่าย */
+  --display:'Chonburi','IBM Plex Sans Thai',Georgia,serif;
+  --ui:'IBM Plex Sans Thai',system-ui,-apple-system,'Segoe UI',Tahoma,sans-serif;
+  --ar:1080/780;      /* สัดส่วนรูปแต่ละช่อง */
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{min-height:100vh;min-height:100dvh;font-family:var(--ui);font-size:16px;line-height:1.55;background:var(--cobalt);color:#fff;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+body.inside{background:var(--paper);color:var(--ink)}
+button{font:inherit;color:inherit;background:none;border:0;border-radius:0;cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+button:disabled{cursor:default}
+:focus{outline:none}
+:focus-visible{outline:3px solid #fff;outline-offset:3px}
+body.inside :focus-visible{outline-color:var(--shoot)}
+[hidden]{display:none!important}
+
+.screen{display:none;min-height:100vh;min-height:100dvh;padding:calc(env(safe-area-inset-top,0px) + 20px) 20px calc(env(safe-area-inset-bottom,0px) + 24px)}
+.screen.on{display:flex;flex-direction:column}
+.wrap{width:100%;max-width:560px;margin:0 auto}
+.note{font-size:14px;line-height:1.65}
+
+.btn{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 26px;border-radius:999px;font-size:16px;font-weight:600;line-height:1.25;text-align:center;transition:transform .12s ease,opacity .2s ease}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn:disabled{opacity:.62}
+.btn-paper{background:#fff;color:var(--ink)}
+.btn-line{color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.55)}
+.btn .lbl{position:relative}
+.btn .prog{position:absolute;inset:0;background:rgba(35,64,200,.2);transform:scaleX(0);transform-origin:left center;transition:transform .2s linear}
+
+/* ช่องปล่อยแถบรูปของตู้ */
+.slot{height:12px;border-radius:6px;background:var(--ink);box-shadow:inset 0 3px 4px rgba(0,0,0,.5);position:relative;z-index:2}
+
+/* ---------- หน้าแรก ---------- */
+#sStart .wrap{flex:1;display:flex;flex-direction:column}
+.hang{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:220px}
+.hang .slot{width:min(240px,64%)}
+.sample{--h:min(38vh,300px);height:var(--h);width:calc(var(--h) / 3);margin-top:-5px;padding:calc(var(--h) * .02) calc(var(--h) * .02) 0;display:flex;flex-direction:column;gap:calc(var(--h) * .0125);background:#fff;transform:rotate(3deg);transform-origin:50% 0;box-shadow:0 18px 32px rgba(6,13,60,.35)}
+@supports (height:1dvh){.sample{--h:min(38dvh,300px)}}
+.sample i{display:block;aspect-ratio:var(--ar);background:#d8ddf0}
+.sample i:nth-child(even){background:#c3cbe8}
+.sample b{flex:1;display:grid;place-items:center;font-family:var(--display);font-weight:400;font-size:calc(var(--h) * .034);color:var(--ink);white-space:nowrap;overflow:hidden}
+.intro{display:flex;flex-direction:column;align-items:flex-start;gap:16px;padding-top:28px}
+.hl{font-family:var(--display);font-weight:400;font-size:clamp(44px,13vw,84px);line-height:1.3}
+.lead{font-size:17px;line-height:1.7;max-width:28em;color:rgba(255,255,255,.88)}
+#startMsg{min-height:1.65em}
+
+/* ---------- หน้ากล้อง (ในตู้) ---------- */
+#sCam .wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:14px}
+.status{min-height:1.6em;font-size:15px;font-weight:500;color:var(--muted)}
+.stage,.thumbs{width:min(100%,calc(56vh * 1080 / 780))}
+@supports (height:1dvh){.stage,.thumbs{width:min(100%,calc(56dvh * 1080 / 780))}}
+.stage{position:relative;aspect-ratio:var(--ar);border-radius:16px;overflow:hidden;background:var(--ink)}
+.stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.stage video.mirror{transform:scaleX(-1)}
+video.bw,.thumbs.bw canvas{filter:grayscale(1)}
+.count{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-size:clamp(88px,30vw,200px);line-height:1;color:#fff;text-shadow:0 6px 36px rgba(15,27,77,.5);pointer-events:none}
+.count.pop{animation:pop 1s ease-out both}
+@keyframes pop{0%{opacity:0;transform:scale(1.35)}18%{opacity:1;transform:scale(1)}80%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.9)}}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+.flash.go{animation:flash .5s ease-out}
+@keyframes flash{0%{opacity:.95}100%{opacity:0}}
+.rec{position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;border-radius:999px;background:var(--shoot);color:#fff;font-size:12px;font-weight:600;line-height:1.6;opacity:0;transition:opacity .2s}
+.rec.on{opacity:1}
+.rec i{width:7px;height:7px;border-radius:50%;background:#fff;animation:blink 1s steps(2,start) infinite}
+@keyframes blink{to{visibility:hidden}}
+.thumbs{list-style:none;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.thumbs li{position:relative;aspect-ratio:var(--ar);border-radius:8px;overflow:hidden;background:var(--mist);display:grid;place-items:center;font-size:14px;font-weight:500;color:#97a1c4}
+.thumbs li.now{box-shadow:inset 0 0 0 2px var(--ink);color:var(--ink)}
+.thumbs canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.tools{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+#sCam .tools{margin-top:auto}   /* จอสูง: ภาพอยู่บนใกล้เลนส์ ปุ่มอยู่ล่างใกล้นิ้ว */
+.seg{display:inline-flex;padding:4px;border-radius:999px;background:var(--mist)}
+.seg button{min-height:38px;padding:0 15px;border-radius:999px;font-size:15px;font-weight:500;color:var(--muted);transition:background-color .15s,color .15s}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.seg button:disabled{opacity:.45}
+.bar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px;width:100%;max-width:360px}
+.shutter{grid-column:2;width:80px;height:80px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 4px var(--ink);display:grid;place-items:center}
+.shutter span{width:58px;height:58px;border-radius:50%;background:var(--shoot);transition:width .2s,height .2s,border-radius .2s,transform .12s}
+.shutter.stop span{width:28px;height:28px;border-radius:7px}
+.shutter:active span{transform:scale(.9)}
+.round{grid-column:3;justify-self:start;width:48px;height:48px;border-radius:50%;background:var(--mist);color:var(--ink);display:grid;place-items:center}
+.round:disabled{opacity:.45}
+#camHint{max-width:26em;text-align:center;color:var(--muted)}
+@media (max-width:360px){.seg button{padding:0 11px;font-size:14px}}
+
+/* ---------- หน้าผลลัพธ์ (แถบรูปออกจากช่อง) ---------- */
+#sResult .wrap{display:flex;flex-direction:column;align-items:center;gap:18px}
+.result{--sh:min(50vh,520px)}
+@supports (height:1dvh){.result{--sh:min(50dvh,520px)}}
+.hl2{align-self:flex-start;font-family:var(--display);font-weight:400;font-size:clamp(28px,8vw,40px);line-height:1.4}
+.opts{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 16px;width:100%}
+.seg-dark{background:rgba(255,255,255,.14)}
+.seg-dark button{color:rgba(255,255,255,.88)}
+.seg-dark button[aria-pressed="true"]{background:#fff;color:var(--ink)}
+.swatches{display:flex;gap:12px}
+.sw{width:32px;height:32px;border-radius:50%;background:var(--c);box-shadow:inset 0 0 0 1px rgba(255,255,255,.6)}
+.sw[aria-checked="true"]{outline:2px solid #fff;outline-offset:3px}
+.tray{display:flex;flex-direction:column;align-items:center;width:100%}
+.tray .slot{width:calc(2 * (var(--sh) / 3 + 20px) + 24px);max-width:100%}
+.outs{display:flex;justify-content:center;gap:4px}
+.out{display:flex;flex-direction:column;align-items:center;gap:12px}
+.mouth{margin-top:-6px;padding:0 10px 18px;overflow:hidden}
+.strip{display:block;height:var(--sh);width:calc(var(--sh) / 3);background:#fff;box-shadow:0 12px 24px rgba(5,12,55,.4);transform:translateY(-104%)}
+.strip img,.strip canvas{display:block;width:100%;height:100%}
+.result.deliver .strip{animation:deliver 1.15s cubic-bezier(.22,.8,.28,1) forwards}
+.result.deliver .out+.out .strip{animation-delay:.16s}
+@keyframes deliver{to{transform:none}}
+.out .btn{min-width:132px;width:calc(var(--sh) / 3 + 12px);padding:0 12px}
+#saveHint{max-width:30em;text-align:center;color:rgba(255,255,255,.82)}
+
+/* ---------- ดูขนาดเต็ม ---------- */
+.lightbox{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;gap:16px;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 16px);background:rgba(9,16,48,.95)}
+.lb-body{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center}
+.lb-body img,.lb-body canvas{display:block;height:100%;width:auto;max-width:100%;object-fit:contain}
+
+@media (prefers-reduced-motion:reduce){
+  .strip{transform:none}
+  .result.deliver .strip,.count.pop,.flash.go,.rec i{animation:none}
+}
+</style>
+</head>
+<body>
+
+<section class="screen on" id="sStart" aria-labelledby="hlStart">
+  <div class="wrap">
+    <div class="hang" aria-hidden="true">
+      <div class="slot"></div>
+      <div class="sample"><i></i><i></i><i></i><i></i><b id="sampleTitle">Photobooth</b></div>
+    </div>
+    <div class="intro">
+      <h1 class="hl" id="hlStart">ตู้ถ่ายรูป<br>4 ช็อต</h1>
+      <p class="lead">ถ่ายต่อกัน 4 ใบ ได้ทั้งแถบรูปและคลิปที่ขยับได้ บันทึกลงเครื่องได้ทันที รูปทั้งหมดอยู่ในเครื่องคุณ ไม่มีการอัปโหลด</p>
+      <button class="btn btn-paper" id="btnOpen" type="button">เปิดกล้อง</button>
+      <p class="note" id="startMsg" role="status" aria-live="polite"></p>
+    </div>
+  </div>
+</section>
+
+<section class="screen" id="sCam" aria-label="ถ่ายรูป">
+  <div class="wrap">
+    <p class="status" id="status" role="status" aria-live="polite">พร้อมถ่าย</p>
+    <div class="stage">
+      <video id="cam" playsinline webkit-playsinline muted autoplay></video>
+      <div class="rec" id="recBadge"><i></i>อัดคลิป</div>
+      <div class="count" id="count" aria-hidden="true"></div>
+      <div class="flash" id="flash"></div>
+    </div>
+    <ol class="thumbs" id="thumbs" aria-label="รูปที่ถ่ายแล้ว">
+      <li><span>1</span></li><li><span>2</span></li><li><span>3</span></li><li><span>4</span></li>
+    </ol>
+    <div class="tools">
+      <div class="seg" id="segFilter" role="group" aria-label="ฟิลเตอร์"></div>
+      <div class="seg" id="segTimer" role="group" aria-label="นับถอยหลัง"></div>
+    </div>
+    <div class="bar">
+      <button class="shutter" id="btnShoot" type="button" aria-label="เริ่มถ่าย"><span></span></button>
+      <button class="round" id="btnFlip" type="button" aria-label="สลับกล้องหน้าหลัง" title="สลับกล้องหน้าหลัง" hidden>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2.3l1.4-2h7.6l1.4 2h2.3A1.5 1.5 0 0 1 21 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z"/><path d="M9 12.2a3.1 3.1 0 0 1 5.6-1.4"/><path d="M14.9 9.4v1.6h-1.6"/><path d="M15 14.3a3.1 3.1 0 0 1-5.6 1.4"/><path d="M9.1 17.1v-1.6h1.6"/></svg>
+      </button>
+    </div>
+    <p class="note" id="camHint"></p>
+  </div>
+</section>
+
+<section class="screen" id="sResult" aria-labelledby="hlResult">
+  <div class="wrap result" id="result">
+    <h2 class="hl2" id="hlResult">ได้แถบรูปแล้ว</h2>
+    <div class="opts">
+      <div class="seg seg-dark" id="segFilterRes" role="group" aria-label="ฟิลเตอร์"></div>
+      <div class="swatches" id="swatches" role="radiogroup" aria-label="สีกรอบ"></div>
+    </div>
+    <div class="tray">
+      <div class="slot" aria-hidden="true"></div>
+      <div class="outs">
+        <div class="out">
+          <div class="mouth"><button class="strip" id="prevPhoto" type="button" aria-label="ดูแถบรูปขนาดเต็ม"><img id="imgPhoto" alt="แถบรูป 4 ช็อต"></button></div>
+          <button class="btn btn-paper" id="btnSavePhoto" type="button" disabled>บันทึกรูป</button>
+        </div>
+        <div class="out">
+          <div class="mouth"><button class="strip" id="prevClip" type="button" aria-label="ดูคลิปขนาดเต็ม"><canvas id="cvLive"></canvas></button></div>
+          <button class="btn btn-paper" id="btnSaveClip" type="button" disabled><span class="prog" id="clipProg"></span><span class="lbl" id="clipLabel">กำลังทำคลิป</span></button>
+        </div>
+      </div>
+    </div>
+    <p class="note" id="saveHint"></p>
+    <button class="btn btn-line" id="btnAgain" type="button">ถ่ายใหม่</button>
+  </div>
+</section>
+
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="ดูขนาดเต็ม" hidden>
+  <div class="lb-body" id="lbBody"></div>
+  <button class="btn btn-paper" id="lbClose" type="button">ปิด</button>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ============================================================
+     ตั้งค่า — แก้ค่าตรงนี้ได้เลย ไม่ต้องแตะส่วนอื่น
+     ============================================================ */
+  const CONFIG = {
+    title: 'Photobooth',   // ข้อความท้ายแถบ เช่น ชื่องานหรือชื่อร้าน (พิมพ์ไทยได้)
+    timers: [3, 5, 10],    // ตัวเลือกนับถอยหลัง (วินาที)
+    defaultTimer: 3,
+    liveSeconds: 2,        // ช่วงที่ขยับในคลิป: กี่วินาทีก่อนชัตเตอร์ของแต่ละช็อต
+    liveFps: 15,           // เฟรมต่อวินาทีของคลิป
+    clipLoops: 3,          // ไฟล์คลิปวนกี่รอบ (2 วิ × 3 รอบ ≈ 6 วิ)
+    pauseAfterShot: 900,   // พักหลังแต่ละช็อต (มิลลิวินาที)
+    sound: true,           // เสียงบี๊บนับถอยหลังและเสียงชัตเตอร์
+    photoQuality: 0.92,    // คุณภาพไฟล์ JPG (0–1)
+    clipBitrate: 5000000,  // บิตเรตคลิป (บิตต่อวินาที)
+    frames: [              // สีกรอบให้เลือก: bg = สีกรอบ, fg = สีตัวหนังสือท้ายแถบ
+      { name: 'ขาว', bg: '#ffffff', fg: '#0f1b4d' },
+      { name: 'ดำ', bg: '#000000', fg: '#f4f3ef' },
+      { name: 'ชมพู', bg: '#f6c9d4', fg: '#5c2236' },
+      { name: 'ครีม', bg: '#f0e6d2', fg: '#3d3326' },
+    ],
+  };
+
+  /* ---------- ขนาดแถบรูป: 2×6 นิ้ว ที่ 600 dpi ---------- */
+  const SHOTS = 4;
+  const L = { W: 1200, H: 3600, pad: 60, gap: 30, footer: 330 };
+  L.slotW = L.W - L.pad * 2;                                                       // 1080
+  L.slotH = Math.round((L.H - L.pad - L.footer - L.gap * (SHOTS - 1)) / SHOTS);    // 780
+  const CLIP_SCALE = 0.5;                                                          // คลิป 600×1800
+  const LIVE_W = Math.round(L.slotW * CLIP_SCALE);
+  const LIVE_H = Math.round(L.slotH * CLIP_SCALE);
+  const FRAME_MS = 1000 / CONFIG.liveFps;
+
+  const $ = (id) => document.getElementById(id);
+  const el = {
+    sStart: $('sStart'), sCam: $('sCam'), sResult: $('sResult'),
+    btnOpen: $('btnOpen'), startMsg: $('startMsg'), sampleTitle: $('sampleTitle'),
+    status: $('status'), cam: $('cam'), rec: $('recBadge'), count: $('count'), flash: $('flash'),
+    thumbs: $('thumbs'), segFilter: $('segFilter'), segTimer: $('segTimer'),
+    btnShoot: $('btnShoot'), btnFlip: $('btnFlip'), camHint: $('camHint'),
+    result: $('result'), segFilterRes: $('segFilterRes'), swatches: $('swatches'),
+    prevPhoto: $('prevPhoto'), imgPhoto: $('imgPhoto'), btnSavePhoto: $('btnSavePhoto'),
+    prevClip: $('prevClip'), cvLive: $('cvLive'), btnSaveClip: $('btnSaveClip'),
+    clipProg: $('clipProg'), clipLabel: $('clipLabel'),
+    saveHint: $('saveHint'), btnAgain: $('btnAgain'),
+    lightbox: $('lightbox'), lbBody: $('lbBody'), lbClose: $('lbClose'),
+    theme: document.querySelector('meta[name="theme-color"]'),
+  };
+
+  /* ---------- เบราว์เซอร์ ---------- */
+  const UA = navigator.userAgent || '';
+  const IS_IOS = /iPad|iPhone|iPod/.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const IN_APP = /FBAN|FBAV|FB_IAB|Instagram|Line\/|KAKAOTALK|musical_ly|Bytedance|TikTok/i.test(UA);
+  // เปิดจาก LINE: สั่งให้ LINE เปิดลิงก์ในเบราว์เซอร์ปกติ (กล้องและการบันทึกไฟล์ใช้ได้ดีกว่า)
+  if (/\bLine\//.test(UA) && !/[?&]openExternalBrowser=1/.test(location.search)) {
+    try { const u = new URL(location.href); u.searchParams.set('openExternalBrowser', '1'); location.replace(u.href); } catch (e) { /* ข้าม */ }
+  }
+  const HAS_LETTER_SPACING = typeof CanvasRenderingContext2D !== 'undefined' && 'letterSpacing' in CanvasRenderingContext2D.prototype;
+
+  /* ---------- จำค่าที่เลือกไว้ในเครื่อง ---------- */
+  const store = {
+    get(key, fallback) {
+      try { const v = localStorage.getItem('pb.' + key); return v === null ? fallback : JSON.parse(v); } catch (e) { return fallback; }
+    },
+    set(key, value) {
+      try { localStorage.setItem('pb.' + key, JSON.stringify(value)); } catch (e) { /* ไม่เป็นไร */ }
+    },
+  };
+  const savedTimer = store.get('timer', CONFIG.defaultTimer);
+  const savedFrame = store.get('frame', 0);
+  const state = {
+    screen: 'start',
+    stream: null,
+    facing: 'user',
+    mirror: true,
+    bw: store.get('bw', false) === true,
+    timer: CONFIG.timers.indexOf(savedTimer) !== -1 ? savedTimer : CONFIG.defaultTimer,
+    frame: Number.isInteger(savedFrame) && savedFrame >= 0 && savedFrame < CONFIG.frames.length ? savedFrame : 0,
+    session: null,
+    result: null,
+  };
+
+  /* ---------- ฟอนต์สำหรับตัวหนังสือบนแถบรูป ---------- */
+  const fontsReady = (() => {
+    if (!document.fonts || !document.fonts.load) return Promise.resolve();
+    const jobs = Promise.all([
+      document.fonts.load('64px Chonburi', CONFIG.title || 'Photobooth'),
+      document.fonts.load('500 28px "IBM Plex Sans Thai"', '0123456789.'),
+    ]).catch(() => {});
+    return Promise.race([jobs, new Promise((r) => setTimeout(r, 3000))]);
+  })();
+
+  /* ---------- เสียง ---------- */
+  let actx = null;
+  function initAudio() {
+    if (!CONFIG.sound) return;
+    try {
+      if (!actx) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) actx = new AC(); }
+      if (actx && actx.state === 'suspended') actx.resume();
+    } catch (e) { actx = null; }
+  }
+  function beep(freq) {
+    if (!actx) return;
+    try {
+      const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
+      o.type = 'sine';
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.14, t + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+      o.connect(g); g.connect(actx.destination);
+      o.start(t); o.stop(t + 0.14);
+    } catch (e) { /* ข้ามเสียง */ }
+  }
+  function shutterSound() {
+    if (!actx) return;
+    try {
+      const n = Math.floor(actx.sampleRate * 0.14);
+      const buf = actx.createBuffer(1, n, actx.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 4);
+      const src = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+      src.buffer = buf;
+      f.type = 'bandpass'; f.frequency.value = 2400; f.Q.value = 0.8;
+      g.gain.value = 0.5;
+      src.connect(f); f.connect(g); g.connect(actx.destination);
+      src.start();
+    } catch (e) { /* ข้ามเสียง */ }
+  }
+
+  /* ---------- ตัวช่วย ---------- */
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const stamp = (d) => `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}-${pad2(d.getHours())}${pad2(d.getMinutes())}${pad2(d.getSeconds())}`;
+  const fmtDate = (d) => `${pad2(d.getDate())}.${pad2(d.getMonth() + 1)}.${d.getFullYear()}`;
+  const canvasBlob = (c, type, q) => new Promise((res) => {
+    try { c.toBlob((b) => res(b), type, q); } catch (e) { res(null); }
+  });
+  async function decode(blob) {
+    if (!blob) return null;
+    if (typeof createImageBitmap === 'function') {
+      try { return await createImageBitmap(blob); } catch (e) { /* ใช้วิธีสำรองด้านล่าง */ }
+    }
+    return new Promise((res) => {
+      const url = URL.createObjectURL(blob), img = new Image();
+      img.onload = () => { URL.revokeObjectURL(url); res(img); };
+      img.onerror = () => { URL.revokeObjectURL(url); res(null); };
+      img.src = url;
+    });
+  }
+  const CANCEL = new Error('cancelled');
+  function wait(ms, s) {
+    return new Promise((res, rej) => {
+      const end = performance.now() + ms;
+      const id = setInterval(() => {
+        if (s && s.cancelled) { clearInterval(id); rej(CANCEL); } else if (performance.now() >= end) { clearInterval(id); res(); }
+      }, 40);
+    });
+  }
+
+  /* ---------- เปลี่ยนหน้า ---------- */
+  function go(name) {
+    state.screen = name;
+    el.sStart.classList.toggle('on', name === 'start');
+    el.sCam.classList.toggle('on', name === 'cam');
+    el.sResult.classList.toggle('on', name === 'result');
+    document.body.classList.toggle('inside', name === 'cam');
+    if (el.theme) el.theme.setAttribute('content', name === 'cam' ? '#ffffff' : '#2340c8');
+    window.scrollTo(0, 0);
+  }
+
+  /* ---------- ปุ่มเลือก ---------- */
+  function buildSeg(root, items, current, onPick) {
+    root.textContent = '';
+    items.forEach(([value, label]) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = label;
+      b.dataset.v = String(value);
+      b.setAttribute('aria-pressed', String(String(value) === String(current)));
+      b.addEventListener('click', () => onPick(value));
+      root.appendChild(b);
+    });
+  }
+  function syncSeg(root, current) {
+    root.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === String(current))));
+  }
+  const FILTERS = [['color', 'สี'], ['bw', 'ขาวดำ']];
+  function setFilter(v) {
+    const bw = v === 'bw';
+    syncSeg(el.segFilter, v);
+    syncSeg(el.segFilterRes, v);
+    if (bw === state.bw) return;
+    state.bw = bw;
+    store.set('bw', bw);
+    el.cam.classList.toggle('bw', bw);
+    el.thumbs.classList.toggle('bw', bw);
+    if (state.result) resultChanged();
+  }
+  function setTimer(t) {
+    state.timer = t;
+    store.set('timer', t);
+    syncSeg(el.segTimer, t);
+  }
+  function buildSwatches() {
+    el.swatches.textContent = '';
+    CONFIG.frames.forEach((f, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'sw';
+      b.style.setProperty('--c', f.bg);
+      b.setAttribute('role', 'radio');
+      b.setAttribute('aria-checked', String(i === state.frame));
+      b.setAttribute('aria-label', 'กรอบสี' + f.name);
+      b.title = 'กรอบสี' + f.name;
+      b.addEventListener('click', () => setFrame(i));
+      el.swatches.appendChild(b);
+    });
+  }
+  function setFrame(i) {
+    if (i === state.frame) return;
+    state.frame = i;
+    store.set('frame', i);
+    el.swatches.querySelectorAll('.sw').forEach((b, j) => b.setAttribute('aria-checked', String(j === i)));
+    if (state.result) resultChanged();
+  }
+
+  /* ---------- กล้อง ---------- */
+  function cameraError(e) {
+    const n = e && e.name;
+    if (n === 'NotAllowedError' || n === 'SecurityError') {
+      return IS_IOS
+        ? 'ยังไม่ได้อนุญาตให้ใช้กล้อง แตะ “aA” ที่แถบที่อยู่เว็บ > การตั้งค่าเว็บไซต์ > กล้อง เลือก “อนุญาต” แล้วกดเปิดกล้องอีกครั้ง'
+        : 'ยังไม่ได้อนุญาตให้ใช้กล้อง แตะไอคอนกล้องหรือแม่กุญแจที่แถบที่อยู่เว็บเพื่ออนุญาต แล้วกดเปิดกล้องอีกครั้ง';
+    }
+    if (n === 'NotFoundError' || n === 'OverconstrainedError') return 'ไม่พบกล้องในเครื่องนี้';
+    if (n === 'NotReadableError' || n === 'AbortError') return 'กล้องถูกแอพอื่นใช้อยู่ ปิดแอพนั้นแล้วกดเปิดกล้องอีกครั้ง';
+    return 'เปิดกล้องไม่สำเร็จ (' + (n || 'ไม่ทราบสาเหตุ') + ') ลองรีเฟรชหน้าแล้วกดเปิดกล้องอีกครั้ง';
+  }
+  function stopStream() {
+    if (state.stream) { state.stream.getTracks().forEach((t) => t.stop()); state.stream = null; }
+  }
+  function videoReady(v) {
+    if (v.videoWidth) return Promise.resolve();
+    return new Promise((res) => {
+      const done = () => { v.removeEventListener('loadedmetadata', done); v.removeEventListener('resize', done); res(); };
+      v.addEventListener('loadedmetadata', done);
+      v.addEventListener('resize', done);
+      setTimeout(done, 4000);
+    });
+  }
+  async function openCamera(opt) {
+    stopStream();
+    const size = { width: { ideal: 1920 }, height: { ideal: 1080 } };
+    const video = opt.deviceId
+      ? Object.assign({ deviceId: { exact: opt.deviceId } }, size)
+      : Object.assign({ facingMode: { ideal: opt.facing || 'user' } }, size);
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video, audio: false });
+    } catch (e) {
+      if (e && (e.name === 'OverconstrainedError' || e.name === 'ConstraintNotSatisfiedError')) {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      } else {
+        throw e;
+      }
+    }
+    state.stream = stream;
+    const track = stream.getVideoTracks()[0];
+    const settings = track && track.getSettings ? track.getSettings() : {};
+    state.facing = settings.facingMode || (opt.deviceId ? 'user' : opt.facing || 'user');
+    state.mirror = state.facing !== 'environment';   // กล้องหน้ากลับซ้ายขวาเหมือนส่องกระจก
+    el.cam.classList.toggle('mirror', state.mirror);
+    el.cam.srcObject = stream;
+    try { await el.cam.play(); } catch (e) { /* บางเครื่องเล่นเองหลังโหลด */ }
+    await videoReady(el.cam);
+    updateFlip();
+  }
+  function currentDeviceId() {
+    const t = state.stream && state.stream.getVideoTracks()[0];
+    return (t && t.getSettings && t.getSettings().deviceId) || '';
+  }
+  async function videoInputs() {
+    try { return (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'videoinput'); } catch (e) { return []; }
+  }
+  async function updateFlip() {
+    el.btnFlip.hidden = (await videoInputs()).length < 2;
+  }
+  async function flipCamera() {
+    if (state.session) return;
+    el.btnFlip.disabled = true;
+    const prevId = currentDeviceId();
+    const prevFacing = state.facing;
+    try {
+      await openCamera({ facing: prevFacing === 'environment' ? 'user' : 'environment' });
+      if (prevId && currentDeviceId() === prevId) {
+        // คอมที่มีกล้องหลายตัว: วนไปกล้องตัวถัดไป
+        const cams = await videoInputs();
+        const idx = cams.findIndex((d) => d.deviceId === prevId);
+        const next = cams[(idx + 1) % cams.length];
+        if (next && next.deviceId && next.deviceId !== prevId) await openCamera({ deviceId: next.deviceId });
+      }
+    } catch (e) {
+      try { await openCamera(prevId ? { deviceId: prevId } : { facing: prevFacing }); } catch (e2) { setCamHint(cameraError(e2)); }
+    } finally {
+      el.btnFlip.disabled = false;
+    }
+  }
+  async function resumeCamera() {
+    const t = state.stream && state.stream.getVideoTracks()[0];
+    if (!t || t.readyState === 'ended') {
+      try { await openCamera({ facing: state.facing }); } catch (e) { setCamHint(cameraError(e)); }
+      return;
+    }
+    if (el.cam.paused) { try { await el.cam.play(); } catch (e) { /* ข้าม */ } }
+  }
+  // วาดภาพจากกล้องลง canvas แบบครอปกลางให้เต็มช่อง (ตรงกับที่เห็นบนจอ)
+  function drawCamera(ctx, w, h) {
+    const v = el.cam, vw = v.videoWidth, vh = v.videoHeight;
+    if (!vw || !vh) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, w, h); return; }
+    const s = Math.max(w / vw, h / vh);
+    const sw = w / s, sh = h / s, sx = (vw - sw) / 2, sy = (vh - sh) / 2;
+    ctx.save();
+    if (state.mirror) { ctx.translate(w, 0); ctx.scale(-1, 1); }
+    ctx.drawImage(v, sx, sy, sw, sh, 0, 0, w, h);
+    ctx.restore();
+  }
+
+  /* ---------- หน้ากล้อง ---------- */
+  const HINT_IDLE = 'กดปุ่มแดง กล้องจะนับถอยหลังแล้วถ่ายต่อกัน 4 ใบ';
+  const HINT_SHOOT = 'กดปุ่มอีกครั้งถ้าต้องการหยุด';
+  const setStatus = (t) => { el.status.textContent = t; };
+  const setCamHint = (t) => { el.camHint.textContent = t; };
+  function setShooting(on) {
+    el.btnShoot.classList.toggle('stop', on);
+    el.btnShoot.setAttribute('aria-label', on ? 'หยุดถ่าย' : 'เริ่มถ่าย');
+    el.segFilter.querySelectorAll('button').forEach((b) => { b.disabled = on; });
+    el.segTimer.querySelectorAll('button').forEach((b) => { b.disabled = on; });
+    el.btnFlip.disabled = on;
+    setCamHint(on ? HINT_SHOOT : HINT_IDLE);
+    if (!on) { setStatus('พร้อมถ่าย'); markThumb(-1); hideCount(); el.rec.classList.remove('on'); }
+  }
+  function clearThumbs() {
+    el.thumbs.querySelectorAll('li').forEach((li) => {
+      li.classList.remove('done', 'now');
+      const c = li.querySelector('canvas');
+      if (c) c.remove();
+    });
+  }
+  function markThumb(i) {
+    el.thumbs.querySelectorAll('li').forEach((li, j) => li.classList.toggle('now', j === i));
+  }
+  function setThumb(i, canvas) {
+    const li = el.thumbs.children[i];
+    if (!li) return;
+    const old = li.querySelector('canvas');
+    if (old) old.remove();
+    li.appendChild(canvas);
+    li.classList.add('done');
+    li.classList.remove('now');
+  }
+  function showCount(n) {
+    el.count.textContent = String(n);
+    el.count.classList.remove('pop');
+    void el.count.offsetWidth;
+    el.count.classList.add('pop');
+  }
+  function hideCount() {
+    el.count.classList.remove('pop');
+    el.count.textContent = '';
+  }
+  function flash() {
+    el.flash.classList.remove('go');
+    void el.flash.offsetWidth;
+    el.flash.classList.add('go');
+  }
+
+  /* ---------- ถ่าย 4 ช็อต ---------- */
+  const grabCv = document.createElement('canvas');
+  grabCv.width = LIVE_W;
+  grabCv.height = LIVE_H;
+  const grabCtx = grabCv.getContext('2d');
+
+  // เก็บเฟรมเล็กๆ ไว้ทำคลิปช่องขยับ (ไม่มีฟิลเตอร์ ใส่ทีหลังได้)
+  function grabLive(s, i) {
+    drawCamera(grabCtx, LIVE_W, LIVE_H);
+    const list = s.frames[i];
+    const k = list.length;
+    list.push(null);
+    s.pending.push(canvasBlob(grabCv, 'image/jpeg', 0.85).then((b) => { list[k] = b; }));
+  }
+  // รูปเต็มความละเอียดสำหรับแถบรูป
+  function captureShot() {
+    const c = document.createElement('canvas');
+    c.width = L.slotW;
+    c.height = L.slotH;
+    drawCamera(c.getContext('2d'), L.slotW, L.slotH);
+    return c;
+  }
+  function shootOne(s, i) {
+    return new Promise((resolve, reject) => {
+      const shotAt = performance.now() + state.timer * 1000;
+      const liveFrom = shotAt - CONFIG.liveSeconds * 1000;
+      let shown = 0;
+      let lastGrab = -Infinity;
+      const tick = () => {
+        if (s.cancelled) { hideCount(); el.rec.classList.remove('on'); reject(CANCEL); return; }
+        const now = performance.now();
+        if (now >= shotAt) {
+          grabLive(s, i);
+          const shot = captureShot();
+          s.shots[i] = shot;
+          setThumb(i, shot);
+          hideCount();
+          el.rec.classList.remove('on');
+          flash();
+          shutterSound();
+          resolve();
+          return;
+        }
+        const left = Math.ceil((shotAt - now) / 1000);
+        if (left !== shown) { shown = left; showCount(left); beep(left === 1 ? 1320 : 880); }
+        if (now >= liveFrom) {
+          if (!el.rec.classList.contains('on')) el.rec.classList.add('on');
+          if (now - lastGrab >= FRAME_MS - 4) { lastGrab = now; grabLive(s, i); }
+        }
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+  }
+  function startOrStop() {
+    if (state.session) { state.session.cancelled = true; return; }
+    runSession();
+  }
+  async function runSession() {
+    if (!el.cam.videoWidth) { await resumeCamera(); if (!el.cam.videoWidth) return; }
+    initAudio();
+    keepAwake();
+    const s = { cancelled: false, shots: [], frames: [], pending: [], date: new Date() };
+    for (let i = 0; i < SHOTS; i++) s.frames.push([]);
+    state.session = s;
+    setShooting(true);
+    clearThumbs();
+    try {
+      for (let i = 0; i < SHOTS; i++) {
+        markThumb(i);
+        setStatus(`ช็อต ${i + 1} จาก ${SHOTS}`);
+        await shootOne(s, i);
+        await wait(i < SHOTS - 1 ? CONFIG.pauseAfterShot : 550, s);
+      }
+      setStatus('กำลังทำแถบรูป');
+      await Promise.all(s.pending);
+      await fontsReady;
+      if (s.cancelled) throw CANCEL;
+      s.frames = s.frames.map((list) => list.filter(Boolean));
+      state.session = null;
+      setShooting(false);
+      showResult(s);
+    } catch (e) {
+      state.session = null;
+      setShooting(false);
+      clearThumbs();
+      s.shots.forEach((c) => { if (c) { c.width = 0; c.height = 0; } });
+      if (e !== CANCEL) { console.error(e); setCamHint('เกิดข้อผิดพลาดระหว่างถ่าย กดปุ่มแดงเพื่อเริ่มใหม่'); }
+    }
+  }
+
+  /* ---------- วาดแถบรูป (ใช้ทั้งรูปนิ่งและคลิป) ---------- */
+  function fitText(ctx, text, x, y, maxW, size, weight, family, spacing) {
+    if (!text) return;
+    let s = size;
+    for (let n = 0; n < 14; n++) {
+      ctx.font = `${weight}${s}px ${family}`;
+      if (HAS_LETTER_SPACING) ctx.letterSpacing = (spacing * s / size) + 'px';
+      if (ctx.measureText(text).width <= maxW) break;
+      s *= 0.9;
+    }
+    ctx.fillText(text, x, y);
+    if (HAS_LETTER_SPACING) ctx.letterSpacing = '0px';
+  }
+  function drawStrip(ctx, k, imgs, o) {
+    const W = L.W * k, H = L.H * k;
+    ctx.save();
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = o.frame.bg;
+    ctx.fillRect(0, 0, W, H);
+    for (let i = 0; i < SHOTS; i++) {
+      const x = L.pad * k, y = (L.pad + i * (L.slotH + L.gap)) * k, w = L.slotW * k, h = L.slotH * k;
+      const im = imgs[i];
+      if (im) ctx.drawImage(im, x, y, w, h);
+      else { ctx.fillStyle = '#9aa3bd'; ctx.fillRect(x, y, w, h); }
+      if (o.bw) {
+        // ขาวดำ: ดึงสีออกโดยคงความสว่างเดิม (ใช้ได้ทุกเบราว์เซอร์ รวม Safari)
+        ctx.globalCompositeOperation = 'saturation';
+        ctx.fillStyle = '#808080';
+        ctx.fillRect(x, y, w, h);
+        ctx.globalCompositeOperation = 'source-over';
+      }
+    }
+    const top = (L.pad + SHOTS * L.slotH + (SHOTS - 1) * L.gap) * k;
+    const fh = H - top;
+    ctx.fillStyle = o.frame.fg;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    fitText(ctx, o.title, W / 2, top + fh * 0.40, L.slotW * k * 0.9, 78 * k, '', 'Chonburi, "IBM Plex Sans Thai", Georgia, serif', 4 * k);
+    ctx.globalAlpha = 0.72;
+    fitText(ctx, o.date, W / 2, top + fh * 0.72, L.slotW * k * 0.9, 34 * k, '500 ', '"IBM Plex Sans Thai", system-ui, sans-serif', 3 * k);
+    ctx.restore();
+  }
+  function stripOpts(r) {
+    return { bw: state.bw, frame: CONFIG.frames[state.frame] || CONFIG.frames[0], title: CONFIG.title, date: fmtDate(r.date) };
+  }
+
+  /* ---------- หน้าผลลัพธ์ ---------- */
+  const cvStill = document.createElement('canvas');
+  cvStill.width = L.W;
+  cvStill.height = L.H;
+  const stillCtx = cvStill.getContext('2d');
+  el.cvLive.width = L.W * CLIP_SCALE;
+  el.cvLive.height = L.H * CLIP_SCALE;
+  const liveCtx = el.cvLive.getContext('2d');
+
+  function showResult(s) {
+    const r = {
+      shots: s.shots,
+      frames: s.frames,
+      date: s.date,
+      name: 'photobooth-' + stamp(s.date),
+      loopLen: Math.max(1, ...s.frames.map((l) => l.length)),
+      photoFile: null,
+      photoURL: '',
+      clipFile: null,
+      saved: false,
+      stillToken: 0,
+    };
+    state.result = r;
+    syncSeg(el.segFilterRes, state.bw ? 'bw' : 'color');
+    buildSwatches();
+    el.result.classList.remove('deliver');
+    el.btnSavePhoto.disabled = true;
+    resetAgain();
+    setClipState('wait');
+    go('result');
+    liveStart();
+    renderStill().then(() => {
+      if (state.result === r) requestAnimationFrame(() => el.result.classList.add('deliver'));
+    });
+    scheduleEncode(300);
+  }
+
+  async function renderStill() {
+    const r = state.result;
+    if (!r) return;
+    const token = ++r.stillToken;
+    drawStrip(stillCtx, 1, r.shots, stripOpts(r));
+    const blob = await canvasBlob(cvStill, 'image/jpeg', CONFIG.photoQuality);
+    if (state.result !== r || token !== r.stillToken || !blob) return;
+    if (r.photoURL) URL.revokeObjectURL(r.photoURL);
+    r.photoURL = URL.createObjectURL(blob);
+    r.photoFile = new File([blob], r.name + '.jpg', { type: 'image/jpeg' });
+    el.imgPhoto.src = r.photoURL;
+    el.btnSavePhoto.disabled = false;
+    try { await el.imgPhoto.decode(); } catch (e) { /* ข้าม */ }
+  }
+
+  let stillTimer = 0;
+  function resultChanged() {
+    if (!state.result) return;
+    clearTimeout(stillTimer);
+    el.btnSavePhoto.disabled = true;
+    stillTimer = setTimeout(renderStill, 120);
+    scheduleEncode(450);
+  }
+
+  /* ---------- คลิปแถบขยับได้: ตัวอย่างบนจอ ---------- */
+  const live = { on: false, gen: 0, t0: 0, k: -1, busy: false, raf: 0 };
+  function pick(k, len, loop) {
+    const f = ((k % loop) + loop) % loop;
+    return Math.min(len - 1, Math.floor((f * len) / loop));
+  }
+  async function drawLiveFrame(k, gen) {
+    const r = state.result;
+    if (!r) return;
+    const imgs = await Promise.all(r.frames.map((list, i) => (list.length ? decode(list[pick(k, list.length, r.loopLen)]) : Promise.resolve(null))));
+    if (gen === live.gen && state.result === r) drawStrip(liveCtx, CLIP_SCALE, imgs.map((im, i) => im || r.shots[i]), stripOpts(r));
+    imgs.forEach((im) => { if (im && typeof im.close === 'function') im.close(); });
+  }
+  function liveLoop() {
+    if (!live.on) return;
+    live.raf = requestAnimationFrame(liveLoop);
+    if (live.busy) return;
+    const k = Math.floor((performance.now() - live.t0) / FRAME_MS);
+    if (k === live.k) return;
+    live.k = k;
+    live.busy = true;
+    const gen = live.gen;
+    drawLiveFrame(k, gen)
+      .catch((e) => console.warn(e))
+      .then(() => { if (gen === live.gen) live.busy = false; });
+  }
+  function liveStart(t0, k) {
+    cancelAnimationFrame(live.raf);
+    live.gen++;
+    live.on = true;
+    live.t0 = t0 === undefined ? performance.now() : t0;
+    live.k = k === undefined ? -1 : k;
+    live.busy = false;
+    live.raf = requestAnimationFrame(liveLoop);
+  }
+  function liveStop() {
+    live.gen++;
+    live.on = false;
+    cancelAnimationFrame(live.raf);
+  }
+
+  /* ---------- คลิปแถบขยับได้: อัดเป็นไฟล์ ---------- */
+  const enc = { token: 0, rec: null, stopTimer: 0, progTimer: 0, debounce: 0, types: null, needed: false };
+  function recorderTypes() {
+    if (typeof MediaRecorder === 'undefined' || !HTMLCanvasElement.prototype.captureStream) return null;
+    const list = ['video/mp4;codecs=avc1', 'video/mp4;codecs=avc1.4d002a', 'video/mp4;codecs=avc1.640028', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+    const ok = list.filter((t) => { try { return MediaRecorder.isTypeSupported(t); } catch (e) { return false; } });
+    return ok.length ? ok : [''];   // '' = ให้เบราว์เซอร์เลือกเอง
+  }
+  function setClipState(kind, p) {
+    const b = el.btnSaveClip;
+    b.dataset.state = kind;
+    el.clipProg.style.transform = `scaleX(${kind === 'encoding' ? p : 0})`;
+    if (kind === 'ready') { b.disabled = false; el.clipLabel.textContent = 'บันทึกคลิป'; }
+    else if (kind === 'failed') { b.disabled = false; el.clipLabel.textContent = 'ทำคลิปอีกครั้ง'; }
+    else if (kind === 'unsupported') { b.disabled = true; el.clipLabel.textContent = 'เบราว์เซอร์นี้ทำคลิปไม่ได้'; }
+    else { b.disabled = true; el.clipLabel.textContent = kind === 'encoding' ? `กำลังทำคลิป ${Math.round(p * 100)}%` : 'กำลังทำคลิป'; }
+  }
+  function cancelEncode() {
+    enc.token++;
+    clearTimeout(enc.stopTimer);
+    clearInterval(enc.progTimer);
+    const rec = enc.rec;
+    enc.rec = null;
+    if (rec && rec.state !== 'inactive') { try { rec.stop(); } catch (e) { /* ข้าม */ } }
+  }
+  function scheduleEncode(delay) {
+    clearTimeout(enc.debounce);
+    cancelEncode();
+    if (!state.result) return;
+    if (!enc.types) enc.types = recorderTypes();
+    if (!enc.types) { setClipState('unsupported'); return; }
+    state.result.clipFile = null;
+    setClipState('wait');
+    enc.debounce = setTimeout(() => startEncode(0), delay);
+  }
+  async function startEncode(ci) {
+    const r = state.result;
+    if (!r) return;
+    if (document.hidden) { enc.needed = true; return; }
+    const types = enc.types;
+    if (ci >= types.length) { setClipState('failed'); if (!live.on) liveStart(); return; }
+    const token = ++enc.token;
+    r.clipFile = null;
+    // วาดเฟรมแรกให้เสร็จก่อน แล้วค่อยเริ่มอัด คลิปจะเริ่มตรงต้นลูปพอดี
+    liveStop();
+    const gen = live.gen;
+    await drawLiveFrame(0, gen);
+    if (token !== enc.token || state.result !== r) { if (state.result === r && !live.on) liveStart(); return; }
+    const type = types[ci];
+    let stream = null, rec = null;
+    try {
+      stream = el.cvLive.captureStream(CONFIG.liveFps);
+      const opts = { videoBitsPerSecond: CONFIG.clipBitrate };
+      if (type) opts.mimeType = type;
+      rec = new MediaRecorder(stream, opts);
+    } catch (e) {
+      if (stream) stream.getTracks().forEach((t) => t.stop());
+      liveStart();
+      startEncode(ci + 1);
+      return;
+    }
+    const chunks = [];
+    let failed = false;
+    rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+    rec.onerror = () => { failed = true; };
+    rec.onstop = () => {
+      stream.getTracks().forEach((t) => t.stop());
+      if (token !== enc.token || state.result !== r) return;
+      clearInterval(enc.progTimer);
+      enc.rec = null;
+      const mime = (rec.mimeType || (chunks[0] && chunks[0].type) || type || 'video/mp4').split(';')[0] || 'video/mp4';
+      const blob = new Blob(chunks, { type: mime });
+      if (failed || blob.size < 2048) { liveStart(); startEncode(ci + 1); return; }
+      if (ci > 0) enc.types = types.slice(ci);   // จำชนิดไฟล์ที่ใช้ได้
+      const ext = mime.indexOf('mp4') !== -1 ? 'mp4' : 'webm';
+      r.clipFile = new File([blob], `${r.name}.${ext}`, { type: mime });
+      setClipState('ready');
+    };
+    const dur = r.loopLen * FRAME_MS * CONFIG.clipLoops;
+    try {
+      rec.start();
+    } catch (e) {
+      stream.getTracks().forEach((t) => t.stop());
+      liveStart();
+      startEncode(ci + 1);
+      return;
+    }
+    enc.rec = rec;
+    liveStart(performance.now(), 0);
+    const t0 = performance.now();
+    setClipState('encoding', 0);
+    enc.progTimer = setInterval(() => setClipState('encoding', Math.min(1, (performance.now() - t0) / dur)), 200);
+    enc.stopTimer = setTimeout(() => { if (rec.state !== 'inactive') rec.stop(); }, dur + 30);
+  }
+
+  /* ---------- บันทึกลงเครื่อง ---------- */
+  async function saveFile(file) {
+    if (!file) return;
+    // iPhone/iPad: เปิดเมนูแชร์ เลือก “บันทึกภาพ/บันทึกวิดีโอ” ได้ไฟล์ลงแอพรูปภาพเลย
+    if (IS_IOS && navigator.share && navigator.canShare) {
+      let ok = false;
+      try { ok = navigator.canShare({ files: [file] }); } catch (e) { ok = false; }
+      if (ok) {
+        try { await navigator.share({ files: [file] }); markSaved(); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+      }
+    }
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.name;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    markSaved();
+  }
+  function markSaved() { if (state.result) state.result.saved = true; }
+
+  /* ---------- ถ่ายใหม่ ---------- */
+  let againTimer = 0;
+  function resetAgain() {
+    clearTimeout(againTimer);
+    againTimer = 0;
+    el.btnAgain.textContent = 'ถ่ายใหม่';
+  }
+  function retake() {
+    clearTimeout(stillTimer);
+    clearTimeout(enc.debounce);
+    cancelEncode();
+    liveStop();
+    closeLightbox();
+    const r = state.result;
+    state.result = null;
+    if (r) {
+      if (r.photoURL) URL.revokeObjectURL(r.photoURL);
+      r.shots.forEach((c) => { if (c) { c.width = 0; c.height = 0; } });
+      r.frames = [];
+    }
+    el.imgPhoto.removeAttribute('src');
+    el.result.classList.remove('deliver');
+    clearThumbs();
+    go('cam');
+    resumeCamera();
+  }
+
+  /* ---------- ดูขนาดเต็ม ---------- */
+  let canvasHome = null;
+  function openLightbox(kind) {
+    const r = state.result;
+    if (!r) return;
+    el.lbBody.textContent = '';
+    if (kind === 'photo') {
+      if (!r.photoURL) return;
+      const img = new Image();
+      img.src = r.photoURL;
+      img.alt = 'แถบรูป 4 ช็อต';
+      el.lbBody.appendChild(img);
+    } else {
+      canvasHome = el.cvLive.parentNode;
+      el.lbBody.appendChild(el.cvLive);
+    }
+    el.lightbox.hidden = false;
+    el.lbClose.focus();
+  }
+  function closeLightbox() {
+    if (el.lightbox.hidden) return;
+    if (canvasHome) { canvasHome.appendChild(el.cvLive); canvasHome = null; }
+    el.lbBody.textContent = '';
+    el.lightbox.hidden = true;
+  }
+
+  /* ---------- กันจอดับระหว่างถ่าย ---------- */
+  let wakeLock = null;
+  async function keepAwake() {
+    if (!('wakeLock' in navigator) || wakeLock || document.hidden) return;
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    } catch (e) { /* ไม่รองรับก็ไม่เป็นไร */ }
+  }
+
+  /* ---------- ผูกปุ่ม ---------- */
+  el.btnOpen.addEventListener('click', async () => {
+    initAudio();
+    if (!window.isSecureContext) { el.startMsg.textContent = 'ต้องเปิดผ่านลิงก์ https เช่น GitHub Pages กล้องถึงจะทำงาน'; return; }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { el.startMsg.textContent = 'เบราว์เซอร์นี้เปิดกล้องไม่ได้ ลองเปิดลิงก์นี้ใน Safari หรือ Chrome'; return; }
+    el.btnOpen.disabled = true;
+    el.startMsg.textContent = 'กำลังเปิดกล้อง';
+    try {
+      await openCamera({ facing: 'user' });
+      el.startMsg.textContent = '';
+      go('cam');
+      keepAwake();
+    } catch (e) {
+      el.startMsg.textContent = cameraError(e);
+    } finally {
+      el.btnOpen.disabled = false;
+    }
+  });
+  el.btnShoot.addEventListener('click', startOrStop);
+  el.btnFlip.addEventListener('click', flipCamera);
+  el.btnSavePhoto.addEventListener('click', () => { const r = state.result; if (r && r.photoFile) saveFile(r.photoFile); });
+  el.btnSaveClip.addEventListener('click', () => {
+    const r = state.result;
+    if (!r) return;
+    const st = el.btnSaveClip.dataset.state;
+    if (st === 'failed') { enc.types = recorderTypes(); scheduleEncode(0); return; }
+    if (st === 'ready' && r.clipFile) saveFile(r.clipFile);
+  });
+  el.btnAgain.addEventListener('click', () => {
+    const r = state.result;
+    if (r && !r.saved && !againTimer) {
+      el.btnAgain.textContent = 'แตะอีกครั้ง รูปชุดนี้จะหายไป';
+      againTimer = setTimeout(resetAgain, 3500);
+      return;
+    }
+    resetAgain();
+    retake();
+  });
+  el.prevPhoto.addEventListener('click', () => openLightbox('photo'));
+  el.prevClip.addEventListener('click', () => openLightbox('clip'));
+  el.lbClose.addEventListener('click', closeLightbox);
+  el.lightbox.addEventListener('click', (e) => { if (e.target === el.lightbox || e.target === el.lbBody) closeLightbox(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeLightbox();
+    // คอม/แท็บเล็ตที่ตั้งเป็นตู้: กด Space หรือ Enter เพื่อถ่ายได้
+    if (state.screen === 'cam' && (e.key === ' ' || e.key === 'Enter') && (!document.activeElement || document.activeElement === document.body)) {
+      e.preventDefault();
+      startOrStop();
+    }
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      if (state.session) state.session.cancelled = true;   // สลับแอพกลางทาง: หยุดรอบนี้
+      if (enc.rec) { cancelEncode(); enc.needed = true; setClipState('wait'); }
+    } else {
+      keepAwake();
+      if (state.screen === 'cam') resumeCamera();
+      if (enc.needed && state.result) { enc.needed = false; scheduleEncode(300); }
+    }
+  });
+
+  /* ---------- เริ่มต้น ---------- */
+  el.sampleTitle.textContent = CONFIG.title;
+  buildSeg(el.segFilter, FILTERS, state.bw ? 'bw' : 'color', setFilter);
+  buildSeg(el.segFilterRes, FILTERS, state.bw ? 'bw' : 'color', setFilter);
+  buildSeg(el.segTimer, CONFIG.timers.map((t) => [t, t + ' วิ']), state.timer, setTimer);
+  buildSwatches();
+  el.cam.muted = true;
+  el.cam.classList.toggle('bw', state.bw);
+  el.thumbs.classList.toggle('bw', state.bw);
+  setCamHint(HINT_IDLE);
+  el.saveHint.textContent = IS_IOS
+    ? 'บน iPhone/iPad กดบันทึกแล้วเลือก “บันทึกภาพ” หรือ “บันทึกวิดีโอ” เพื่อเก็บลงแอพรูปภาพ'
+    : 'ไฟล์จะถูกบันทึกไว้ในโฟลเดอร์ดาวน์โหลดของเครื่อง';
+  if (IN_APP) el.startMsg.textContent = 'เปิดจากในแอพอยู่ กล้องหรือการบันทึกไฟล์อาจใช้ไม่ได้ แตะเมนู ⋯ แล้วเลือกเปิดในเบราว์เซอร์';
+
+  // ไว้ใช้ทดสอบ: ดูสถานะได้จาก DevTools
+  window.__photobooth = { CONFIG, state };
+})();
+</script>
+</body>
+</html>
