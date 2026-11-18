@@ -20,7 +20,7 @@
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chonburi&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Sriracha&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chonburi&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Mali:wght@400&display=swap">
 <style>
 :root{
   --cobalt:#2340c8;   /* ผ้าม่านตู้ (นอกตู้) */
@@ -107,14 +107,19 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
 .chip{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 14px 0 11px;border-radius:999px;background:rgba(255,255,255,.16);color:#fff;font-size:14px;font-weight:600}
 .chip:disabled{opacity:.5}
 #sCam .wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:12px}
-.stage{position:relative;width:min(100%,calc(42vh * var(--arn)));aspect-ratio:var(--ar);border-radius:16px;overflow:hidden;background:var(--ink)}
-@supports (height:1dvh){.stage{width:min(100%,calc(42dvh * var(--arn)))}}
+.stage{--sh:42vh;flex-shrink:0;position:relative;width:min(100%,calc(var(--sh) * var(--arn)));aspect-ratio:var(--ar);border-radius:16px;overflow:hidden;background:var(--ink);transition:width .45s var(--ease),border-radius .3s,box-shadow .3s}
+@supports (height:1dvh){.stage{--sh:42dvh}}
+.stage.framed{--sh:50vh;border-radius:3px;background:#fff;box-shadow:0 12px 28px rgba(15,27,77,.22)}
+@supports (height:1dvh){.stage.framed{--sh:50dvh}}
 .stage video,.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .stage video{object-fit:cover}
 .stage video.mirror{transform:scaleX(-1)}
 .stage video.bw{filter:grayscale(1)}
-.stage canvas{opacity:0;transition:opacity .2s}
-.stage canvas.live{opacity:1}
+.stage #stageCv{opacity:0;transition:opacity .2s}
+.stage #stageCv.live{opacity:1}
+.stage #printCv{opacity:0;transition:opacity .3s}
+.stage.framed #printCv{opacity:1}
+.stage.framed #stageCv{visibility:hidden}
 .count{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-size:clamp(88px,28vw,190px);line-height:1;color:#fff;text-shadow:0 6px 36px rgba(15,27,77,.5);pointer-events:none}
 .count.pop{animation:countPop 1s ease-out both}
 @keyframes countPop{0%{opacity:0;transform:scale(1.35)}18%{opacity:1;transform:scale(1)}80%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.9)}}
@@ -131,16 +136,20 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
 .thumbs li.done{animation:thumbIn .45s var(--spring)}
 @keyframes thumbIn{from{transform:scale(.7)}to{transform:none}}
 .thumbs canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-.bar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:22px;width:100%;max-width:380px}
-.shutter{grid-column:2;width:80px;height:80px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 4px var(--ink);display:grid;place-items:center}
+.bar{display:flex;justify-content:center;align-items:center;gap:12px;width:100%;max-width:420px}
+.shutter{flex:0 0 auto;margin:0 4px;width:80px;height:80px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 4px var(--ink);display:grid;place-items:center}
 .shutter span{width:58px;height:58px;border-radius:50%;background:var(--shoot)}
 .shutter.stop span{width:28px;height:28px;border-radius:7px}
 .shutter:active span{transform:scale(.86);transition-duration:.08s}
 .round{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;font-weight:500;color:var(--muted)}
 .round svg{width:48px;height:48px;padding:12px;border-radius:50%;background:var(--mist);color:var(--ink);transition:transform .3s var(--spring)}
 .round:disabled{opacity:.45}
-#btnAlbum{grid-column:1;justify-self:end}
-#btnFlip{grid-column:3;justify-self:start}
+.round{min-width:52px}
+.round[aria-pressed="true"] svg{background:var(--ink);color:#ffd45a}
+/* แฟลชกล้องหน้า: ทั้งจอเป็นสีขาวตอนกดชัตเตอร์ ส่องหน้าแทนแฟลช */
+#sCam.lit .camhead{background:#fff;color:var(--ink)}
+.litflash{position:fixed;inset:0;z-index:40;background:#fff;opacity:0;pointer-events:none;transition:opacity .35s}
+.litflash.on{opacity:1;transition:none}
 #camHint{max-width:26em;text-align:center;color:var(--muted)}
 #sCam .panel{margin-top:auto}
 
@@ -207,7 +216,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
 .lightbox{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;gap:16px;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 16px);background:rgba(9,16,48,.95);animation:screenIn .25s var(--ease) both}
 .lb-body{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center}
 .lb-body img,.lb-body canvas{display:block;height:100%;width:auto;max-width:100%;object-fit:contain}
-.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 24px);z-index:45;max-width:calc(100% - 40px);padding:12px 18px;border-radius:14px;background:var(--ink);color:#fff;font-size:14px;line-height:1.5;box-shadow:0 10px 30px rgba(0,0,0,.25);transform:translate(-50%,calc(100% + 40px));opacity:0;visibility:hidden;transition:transform .45s var(--spring),opacity .25s,visibility 0s .45s;pointer-events:none}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 66px);z-index:45;max-width:calc(100% - 40px);padding:12px 18px;border-radius:14px;background:var(--ink);color:#fff;font-size:14px;line-height:1.5;box-shadow:0 10px 30px rgba(0,0,0,.25);transform:translate(-50%,-30px);opacity:0;visibility:hidden;transition:transform .45s var(--spring),opacity .25s,visibility 0s .45s;pointer-events:none}
 .toast.on{transform:translate(-50%,0);opacity:1;visibility:visible;transition:transform .45s var(--spring),opacity .2s,visibility 0s}
 
 @media (max-height:680px){.thumbs{height:38px}#camHint{display:none}}
@@ -239,15 +248,12 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
 <section class="screen" id="sCam" aria-label="ถ่ายรูป">
   <header class="camhead">
     <p class="status" id="status" role="status" aria-live="polite">พร้อมถ่าย</p>
-    <button class="chip" id="btnTimer" type="button">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2"/><path d="M9.5 2.5h5"/></svg>
-      <span id="timerLabel">3 วิ</span>
-    </button>
   </header>
   <div class="wrap">
     <div class="stage" id="stage">
       <video id="cam" playsinline webkit-playsinline muted autoplay></video>
       <canvas id="stageCv"></canvas>
+      <canvas id="printCv" aria-hidden="true"></canvas>
       <div class="rec" id="recBadge"><i></i>อัดคลิป</div>
       <div class="count" id="count" aria-hidden="true"></div>
       <div class="flash" id="flash"></div>
@@ -259,7 +265,9 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/><circle cx="8" cy="11" r="1.5"/><path d="M17 17l-4-4-6.5 6.5"/></svg>
         <span>อัลบั้ม</span>
       </button>
+      <button class="round" id="btnTimer" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2"/><path d="M9.5 2.5h5"/></svg><span id="timerLabel">3 วิ</span></button>
       <button class="shutter" id="btnShoot" type="button" aria-label="เริ่มถ่าย"><span></span></button>
+      <button class="round" id="btnFlash" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z"/></svg><span id="flashLabel">แฟลชปิด</span></button>
       <button class="round" id="btnFlip" type="button" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2.3l1.4-2h7.6l1.4 2h2.3A1.5 1.5 0 0 1 21 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z"/><path d="M9 12.2a3.1 3.1 0 0 1 5.6-1.4"/><path d="M14.9 9.4v1.6h-1.6"/><path d="M15 14.3a3.1 3.1 0 0 1-5.6 1.4"/><path d="M9.1 17.1v-1.6h1.6"/></svg>
         <span>สลับกล้อง</span>
@@ -297,6 +305,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
   <button class="btn btn-paper" id="lbClose" type="button">ปิด</button>
 </div>
 <div class="curtain" id="curtain" aria-hidden="true"><i class="cl"></i><i class="cr"></i><b>Tu.Photobooth<small>กำลังเปิดกล้อง</small></b></div>
+<div class="litflash" id="litFlash" aria-hidden="true"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -346,6 +355,24 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     { id: 'olive', name: 'เขียวมะกอก', kind: 'solid', bg: '#6b7547', ink: '#f4efe0' },
     { id: 'mustard', name: 'เหลืองมัสตาร์ด', kind: 'solid', bg: '#e0b13a', ink: '#3b2a06' },
     { id: 'lilac', name: 'ม่วงลาเวนเดอร์', kind: 'solid', bg: '#cdbfe8', ink: '#33265a' },
+    // ธีมคริสต์มาส
+    { id: 'xm-snow-navy', name: 'เกล็ดหิมะ กรมท่า', kind: 'snow', bg: '#1c2b5a', fg: '#ffffff' },
+    { id: 'xm-snow-red', name: 'เกล็ดหิมะ แดง', kind: 'snow', bg: '#b3202e', fg: '#ffffff' },
+    { id: 'xm-snow-green', name: 'เกล็ดหิมะ เขียว', kind: 'snow', bg: '#1f5a3c', fg: '#f4efe0' },
+    { id: 'xm-trees', name: 'ต้นคริสต์มาส', kind: 'trees', bg: '#f6efe2', fg: '#2f6b45', accent: '#e2b23a' },
+    { id: 'xm-trees-red', name: 'ต้นคริสต์มาส พื้นแดง', kind: 'trees', bg: '#b3202e', fg: '#1f5a3c', accent: '#ffd76a' },
+    { id: 'xm-baubles', name: 'ลูกบอลประดับ', kind: 'baubles', bg: '#1f5a3c', colors: ['#d33a46', '#e8c35a', '#f4efe0', '#3b6fd8'] },
+    { id: 'xm-baubles-navy', name: 'ลูกบอลประดับ กรมท่า', kind: 'baubles', bg: '#1c2b5a', colors: ['#e8c35a', '#d33a46', '#ffffff'] },
+    { id: 'xm-holly', name: 'ใบฮอลลี่', kind: 'holly', bg: '#fbf6ec', fg: '#2f6b45', accent: '#d33a46' },
+    { id: 'xm-holly-red', name: 'ใบฮอลลี่ พื้นแดง', kind: 'holly', bg: '#a31d2a', fg: '#2f6b45', accent: '#f4efe0' },
+    { id: 'xm-stars', name: 'ดาวทอง', kind: 'stars', bg: '#b3202e', fg: '#f2cf6b' },
+    { id: 'xm-stars-navy', name: 'ดาวคืนคริสต์มาส', kind: 'stars', bg: '#141f45', fg: '#f2cf6b' },
+    { id: 'xm-gifts', name: 'กล่องของขวัญ', kind: 'gifts', bg: '#f6efe2', colors: ['#d33a46', '#2f6b45', '#3b6fd8'], ribbon: '#e8c35a' },
+    { id: 'xm-lights', name: 'ไฟประดับ', kind: 'lights', bg: '#141f45', colors: ['#ff5a5a', '#ffd25a', '#5ad17a', '#5aa8ff', '#ff8ad8'] },
+    { id: 'xm-plaid', name: 'สก็อตคริสต์มาส', kind: 'tartan', bg: '#a31d2a', bands: [[0, 5, '#1f5a3c', 0.65], [7, 1, '#ffffff', 0.8], [10, 2.5, '#1f5a3c', 0.4], [14, 0.5, '#e8c35a', 0.9]] },
+    { id: 'xm-candy', name: 'ไม้เท้าลูกกวาด', kind: 'stripes', dir: 'd', bg: '#ffffff', fg: '#c8202e' },
+    { id: 'xm-candy-green', name: 'ลูกกวาดแดงเขียว', kind: 'stripes', dir: 'd', bg: '#ffffff', colors: ['#c8202e', '#ffffff', '#2f6b45', '#ffffff'] },
+    // ลายทั่วไป
     { id: 'dots-red', name: 'ลายจุดแดง', kind: 'dots', bg: '#c8323f', fg: '#fff4ea' },
     { id: 'dots-ink', name: 'ลายจุดดำ', kind: 'dots', bg: '#fbf7ef', fg: '#1d1d1f' },
     { id: 'dots-pink', name: 'ลายจุดชมพู', kind: 'dots', bg: '#f4c3cf', fg: '#ffffff' },
@@ -437,6 +464,18 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     ctx.bezierCurveTo(x + s * 0.5, y, x, y, x, y + s * 0.3);
     ctx.closePath();
   }
+  function tile(W, H, gx, gy, fn) {
+    for (let row = 0, y = gy * 0.5; y < H + gy; row++, y += gy) {
+      for (let x = (row % 2 ? gx / 2 : 0) + gx * 0.25; x < W + gx; x += gx) fn(x, y, row);
+    }
+  }
+  function starPath(ctx, x, y, r, rIn) {
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + (i * Math.PI) / 5, rr = i % 2 ? rIn : r;
+      if (i) ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); else ctx.moveTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+    }
+    ctx.closePath();
+  }
   function paintStyle(ctx, W, H, k, st) {
     ctx.save();
     ctx.globalAlpha = 1;
@@ -464,15 +503,88 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
         for (let y = off * u; y < H; y += P) ctx.fillRect(0, y, W, wd * u);
       });
     } else if (st.kind === 'stripes') {
-      const w = (st.w || 34) * k, step = w + (st.gap || st.w || 34) * k;
-      ctx.fillStyle = st.fg;
+      const w = (st.w || 34) * k, step = st.colors ? w : w + (st.gap || st.w || 34) * k;
+      let ci = 0;
+      const band = () => { if (st.colors) ctx.fillStyle = st.colors[ci++ % st.colors.length]; };
+      ctx.fillStyle = st.fg || '#000';
       if (st.dir === 'h') { for (let y = 0; y < H; y += step) ctx.fillRect(0, y, W, w); }
       else if (st.dir === 'v') { for (let x = step / 2; x < W; x += step) ctx.fillRect(x, 0, w, H); }
       else {
         const D = Math.hypot(W, H);
         ctx.translate(W / 2, H / 2);
         ctx.rotate(-Math.PI / 4);
-        for (let x = -D / 2; x < D / 2; x += step) ctx.fillRect(x, -D / 2, w, D);
+        for (let x = -D / 2; x < D / 2; x += step) { band(); ctx.fillRect(x, -D / 2, w, D); }
+      }
+    } else if (st.kind === 'snow') {
+      ctx.strokeStyle = st.fg; ctx.lineWidth = 3.2 * k; ctx.lineCap = 'round';
+      ctx.beginPath();
+      tile(W, H, 100 * k, 92 * k, (x, y) => {
+        const r = 17 * k;
+        for (let a = 0; a < 3; a++) {
+          const t = a * Math.PI / 3, c = Math.cos(t) * r, s2 = Math.sin(t) * r;
+          ctx.moveTo(x - c, y - s2); ctx.lineTo(x + c, y + s2);
+          for (const sg of [1, -1]) {   // กิ่งเล็กปลายแฉก
+            const bx = x + sg * c * 0.62, by = y + sg * s2 * 0.62;
+            for (const d of [0.55, -0.55]) { ctx.moveTo(bx, by); ctx.lineTo(bx + sg * Math.cos(t + d) * r * 0.32, by + sg * Math.sin(t + d) * r * 0.32); }
+          }
+        }
+      });
+      ctx.stroke();
+      ctx.fillStyle = rgba(st.fg, 0.55); ctx.beginPath();
+      tile(W, H, 100 * k, 92 * k, (x, y) => { const px = x + 50 * k, py = y + 30 * k, r = 3.2 * k; ctx.moveTo(px + r, py); ctx.arc(px, py, r, 0, Math.PI * 2); });
+      ctx.fill();
+    } else if (st.kind === 'trees') {
+      tile(W, H, 104 * k, 112 * k, (x, y) => {
+        ctx.fillStyle = st.fg; ctx.beginPath();
+        ctx.moveTo(x, y - 34 * k); ctx.lineTo(x - 20 * k, y - 4 * k); ctx.lineTo(x + 20 * k, y - 4 * k); ctx.closePath();
+        ctx.moveTo(x, y - 18 * k); ctx.lineTo(x - 28 * k, y + 22 * k); ctx.lineTo(x + 28 * k, y + 22 * k); ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#7a4a2a'; ctx.fillRect(x - 4 * k, y + 22 * k, 8 * k, 9 * k);
+        ctx.fillStyle = st.accent; ctx.beginPath(); starPath(ctx, x, y - 36 * k, 7 * k, 3 * k); ctx.fill();
+      });
+    } else if (st.kind === 'baubles') {
+      let n = 0;
+      tile(W, H, 92 * k, 96 * k, (x, y) => {
+        const r = 17 * k;
+        ctx.fillStyle = st.colors[n++ % st.colors.length]; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#d9b24a'; ctx.fillRect(x - 5 * k, y - r - 5 * k, 10 * k, 7 * k);
+        ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.beginPath(); ctx.arc(x - 6 * k, y - 6 * k, 5 * k, 0, Math.PI * 2); ctx.fill();
+      });
+    } else if (st.kind === 'holly') {
+      tile(W, H, 112 * k, 100 * k, (x, y) => {
+        ctx.fillStyle = st.fg; ctx.beginPath();
+        ctx.ellipse(x - 13 * k, y + 2 * k, 17 * k, 7 * k, -0.5, 0, Math.PI * 2);
+        ctx.ellipse(x + 13 * k, y + 2 * k, 17 * k, 7 * k, 0.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = st.accent; ctx.beginPath();
+        [[0, -4], [7, 3], [-7, 4]].forEach(([dx, dy]) => { const px = x + dx * k, py = y + dy * k; ctx.moveTo(px + 5 * k, py); ctx.arc(px, py, 5 * k, 0, Math.PI * 2); });
+        ctx.fill();
+      });
+    } else if (st.kind === 'stars') {
+      ctx.fillStyle = st.fg; ctx.beginPath();
+      tile(W, H, 84 * k, 80 * k, (x, y, row) => starPath(ctx, x, y, (row % 2 ? 9 : 14) * k, (row % 2 ? 4 : 6) * k));
+      ctx.fill();
+    } else if (st.kind === 'gifts') {
+      let n = 0;
+      tile(W, H, 100 * k, 100 * k, (x, y) => {
+        const s2 = 34 * k;
+        ctx.fillStyle = st.colors[n++ % st.colors.length]; ctx.fillRect(x - s2 / 2, y - s2 / 2, s2, s2);
+        ctx.fillStyle = st.ribbon; ctx.fillRect(x - 3 * k, y - s2 / 2, 6 * k, s2); ctx.fillRect(x - s2 / 2, y - 3 * k, s2, 6 * k);
+        ctx.beginPath(); ctx.ellipse(x - 6 * k, y - s2 / 2 - 4 * k, 6 * k, 4 * k, 0.4, 0, Math.PI * 2); ctx.ellipse(x + 6 * k, y - s2 / 2 - 4 * k, 6 * k, 4 * k, -0.4, 0, Math.PI * 2); ctx.fill();
+      });
+    } else if (st.kind === 'lights') {
+      const gap = 110 * k, sp = 56 * k;
+      let n = 0;
+      for (let y = gap * 0.45; y < H + gap; y += gap) {
+        ctx.strokeStyle = '#3d4a3a'; ctx.lineWidth = 2.5 * k; ctx.beginPath(); ctx.moveTo(0, y);
+        for (let x = 0; x < W + sp; x += sp) ctx.quadraticCurveTo(x + sp / 2, y + 16 * k, x + sp, y);
+        ctx.stroke();
+        for (let x = sp / 2; x < W + sp; x += sp) {
+          const by = y + 8 * k, c = st.colors[n++ % st.colors.length];
+          ctx.fillStyle = rgba(c, 0.25); ctx.beginPath(); ctx.arc(x, by + 10 * k, 15 * k, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = c; ctx.beginPath(); ctx.ellipse(x, by + 10 * k, 6.5 * k, 10 * k, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#2b3329'; ctx.fillRect(x - 3.5 * k, by - 2 * k, 7 * k, 5 * k);
+        }
       }
     } else if (st.kind === 'checker') {
       const s = 56 * k;
@@ -508,8 +620,8 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     const patterned = st.kind !== 'solid';
     const hand = g.kind === 'single';   // แบบเดี่ยวใช้ลายมือเหมือนเขียนใต้รูปโพลารอยด์
     const base = g.kind === 'grid' ? 1.35 : 1;
-    const tFont = hand ? 'Sriracha, "IBM Plex Sans Thai", cursive' : 'Chonburi, "IBM Plex Sans Thai", Georgia, serif';
-    const dFont = hand ? 'Sriracha, "IBM Plex Sans Thai", cursive' : '"IBM Plex Sans Thai", system-ui, sans-serif';
+    const tFont = hand ? 'Mali, "IBM Plex Sans Thai", cursive' : 'Chonburi, "IBM Plex Sans Thai", Georgia, serif';
+    const dFont = hand ? 'Mali, "IBM Plex Sans Thai", cursive' : '"IBM Plex Sans Thai", system-ui, sans-serif';
     const tSize = (hand ? 84 : 78) * base * k, dSize = (hand ? 40 : 34) * base * k;
     const tSpace = hand ? 0 : 4 * base * k, dSpace = hand ? 0 : 3 * base * k;
     g.footers.forEach((f) => {
@@ -749,8 +861,8 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     sStart: $('sStart'), sCam: $('sCam'), sResult: $('sResult'),
     btnOpen: $('btnOpen'), startMsg: $('startMsg'), sampleTitle: $('sampleTitle'),
     status: $('status'), btnTimer: $('btnTimer'), timerLabel: $('timerLabel'),
-    stage: $('stage'), cam: $('cam'), stageCv: $('stageCv'), rec: $('recBadge'), count: $('count'), flash: $('flash'),
-    thumbs: $('thumbs'), panelCam: $('panelCam'), btnAlbum: $('btnAlbum'), btnShoot: $('btnShoot'), btnFlip: $('btnFlip'),
+    stage: $('stage'), cam: $('cam'), stageCv: $('stageCv'), printCv: $('printCv'), rec: $('recBadge'), count: $('count'), flash: $('flash'),
+    thumbs: $('thumbs'), panelCam: $('panelCam'), btnFlash: $('btnFlash'), flashLabel: $('flashLabel'), litFlash: $('litFlash'), btnAlbum: $('btnAlbum'), btnShoot: $('btnShoot'), btnFlip: $('btnFlip'),
     camHint: $('camHint'), fileInput: $('fileInput'),
     result: $('result'), segView: $('segView'), traySlot: $('traySlot'), print: $('print'), imgPhoto: $('imgPhoto'), cvLive: $('cvLive'),
     btnSavePhoto: $('btnSavePhoto'), btnSaveClip: $('btnSaveClip'), clipProg: $('clipProg'), clipLabel: $('clipLabel'),
@@ -798,6 +910,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     layout: pickValid(store.get('layout', CONFIG.defaultLayout), (v) => !!GEO[v], GEO[CONFIG.defaultLayout] ? CONFIG.defaultLayout : 'strip4'),
     filter: pickValid(store.get('filter', CONFIG.defaultFilter), (v) => AVAILABLE_FILTERS.some((f) => f.id === v), 'normal'),
     style: pickValid(store.get('style', CONFIG.defaultStyle), (v) => !!STYLE_BY[v], STYLES[0].id),
+    flash: store.get('flash', false) === true,
     session: null,
     result: null,
   };
@@ -812,7 +925,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     const jobs = Promise.all([
       document.fonts.load('64px Chonburi', text),
       document.fonts.load('500 28px "IBM Plex Sans Thai"', text),
-      document.fonts.load('64px Sriracha', text),
+      document.fonts.load('64px Mali', text),
     ]).catch(() => {});
     return Promise.race([jobs, new Promise((r) => setTimeout(r, 3000))]);
   })();
@@ -1149,10 +1262,20 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     syncAll();
     setStatus(readyText());
   }
+  // ก่อนถ่าย: จอกล้องโชว์ทั้งเฟรมพร้อมภาพสดทุกช่อง / ระหว่างถ่าย: จอใหญ่ช่องเดียว
+  let stageMode = 'print';
   function applyStage() {
-    const g = geo();
+    const g = geo(), print = stageMode === 'print';
     document.documentElement.style.setProperty('--ar', `${g.slotW}/${g.slotH}`);
     document.documentElement.style.setProperty('--arn', String(g.aspect));
+    el.stage.style.setProperty('--ar', print ? `${g.W}/${g.H}` : `${g.slotW}/${g.slotH}`);
+    el.stage.style.setProperty('--arn', String(print ? g.W / g.H : g.aspect));
+  }
+  function setStageMode(m) {
+    stageMode = m;
+    el.stage.classList.toggle('framed', m === 'print');
+    el.thumbs.hidden = m === 'print';
+    applyStage();
   }
   function readyText() { return `พร้อมถ่าย ${geo().count} รูป`; }
 
@@ -1242,9 +1365,10 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
   function previewLoop(now) {
     if (!preview.on) return;
     preview.raf = requestAnimationFrame(previewLoop);
-    if (!previewFX || now - preview.last < 30) return;
+    if (now - preview.last < 30) return;
     const v = el.cam;
-    if (!v.videoWidth || v.readyState < 2) return;
+    if (stageMode === 'print') { preview.last = now; try { drawPrintPreview(v, now); } catch (e) { /* ข้ามเฟรมนี้ */ } return; }
+    if (!previewFX || !v.videoWidth || v.readyState < 2) return;
     preview.last = now;
     const cv = el.stageCv, rect = cv.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2);
     const w = Math.max(2, Math.round(rect.width * dpr)), h = Math.max(2, Math.round(rect.height * dpr));
@@ -1253,6 +1377,38 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
       previewFX.draw(v, curFilter(), { w, h, crop: coverCrop(v.videoWidth, v.videoHeight, w / h), mirror: state.mirror, seed: Math.floor(now / 50) });
       if (!cv.classList.contains('live')) cv.classList.add('live');
     } catch (e) { /* ข้ามเฟรมนี้ */ }
+  }
+  const printBg = document.createElement('canvas');
+  const printTmp = document.createElement('canvas');
+  let printBgKey = '';
+  function drawPrintPreview(v, now) {
+    const g = geo(), cv = el.printCv, rect = cv.getBoundingClientRect();
+    if (!rect.width) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = Math.round(rect.width * dpr), h = Math.round((w * g.H) / g.W);
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+    const k = w / g.W, ctx = cv.getContext('2d'), today = fmtDate(new Date());
+    const key = [g.id, state.style, w, today].join('|');
+    if (key !== printBgKey) {
+      printBg.width = w; printBg.height = h;
+      paintPrint(printBg.getContext('2d'), g, k, curStyle(), CONFIG.title, today);
+      printBgKey = key;
+    }
+    ctx.drawImage(printBg, 0, 0);
+    const sw = Math.max(2, Math.round(g.slotW * k)), sh = Math.max(2, Math.round(g.slotH * k));
+    const targets = g.slots.map((s) => [s.x * k, s.y * k, s.w * k, s.h * k]);
+    if (!v.videoWidth || v.readyState < 2) { ctx.fillStyle = '#2a3566'; targets.forEach((t) => ctx.fillRect(t[0], t[1], t[2], t[3])); return; }
+    const f = curFilter();
+    if (previewFX) {
+      const sc = el.stageCv;
+      if (sc.width !== sw || sc.height !== sh) { sc.width = sw; sc.height = sh; }
+      previewFX.draw(v, f, { w: sw, h: sh, crop: coverCrop(v.videoWidth, v.videoHeight, sw / sh), mirror: state.mirror, seed: Math.floor(now / 50) });
+      targets.forEach((t) => ctx.drawImage(sc, 0, 0, sw, sh, t[0], t[1], t[2], t[3]));
+    } else {
+      if (printTmp.width !== sw || printTmp.height !== sh) { printTmp.width = sw; printTmp.height = sh; }
+      drawCover(printTmp.getContext('2d'), v, v.videoWidth, v.videoHeight, sw, sh, state.mirror);
+      targets.forEach((t) => { ctx.drawImage(printTmp, t[0], t[1], t[2], t[3]); if (f.mono) monoRect(ctx, t[0], t[1], t[2], t[3]); });
+    }
   }
   function startPreview() {
     if (!preview.on) { preview.on = true; preview.raf = requestAnimationFrame(previewLoop); }
@@ -1265,8 +1421,24 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     stopThumbTimer();
   }
 
+  /* ---------- แฟลช: กล้องหน้าใช้จอขาว กล้องหลังใช้ไฟแฟลชของเครื่อง ---------- */
+  const videoTrack = () => state.stream && state.stream.getVideoTracks()[0];
+  function torchSupported() {
+    const t = videoTrack();
+    try { return !!(t && t.getCapabilities && t.getCapabilities().torch); } catch (e) { return false; }
+  }
+  async function setTorch(on) {
+    const t = videoTrack();
+    if (!t) return false;
+    try { await t.applyConstraints({ advanced: [{ torch: on }] }); return true; } catch (e) { return false; }
+  }
+  function setFlashLabel() {
+    el.btnFlash.setAttribute('aria-pressed', String(state.flash));
+    el.flashLabel.textContent = state.flash ? 'แฟลชเปิด' : 'แฟลชปิด';
+  }
+
   /* ---------- หน้ากล้อง ---------- */
-  const HINT_IDLE = 'กดปุ่มแดงเพื่อถ่าย หรือเลือกรูปจากอัลบั้ม';
+  const HINT_IDLE = 'นี่คือตัวอย่างรูปที่จะได้ กดปุ่มแดงเพื่อถ่าย หรือเลือกรูปจากอัลบั้ม';
   const HINT_SHOOT = 'กดปุ่มอีกครั้งถ้าต้องการหยุด';
   const setStatus = (t) => { el.status.textContent = t; };
   const setCamHint = (t) => { el.camHint.textContent = t; };
@@ -1304,9 +1476,11 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     el.btnShoot.setAttribute('aria-label', on ? 'หยุดถ่าย' : 'เริ่มถ่าย');
     el.panelCam.classList.toggle('locked', on);
     el.btnTimer.disabled = on;
+    el.btnFlash.disabled = on;
     el.btnAlbum.disabled = on;
     el.btnFlip.disabled = on;
     setCamHint(on ? HINT_SHOOT : HINT_IDLE);
+    setStageMode(on ? 'shoot' : 'print');
     if (!on) { setStatus(readyText()); markThumb(-1); hideCount(); el.rec.classList.remove('on'); }
   }
   function showCount(n) {
@@ -1339,17 +1513,22 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     return new Promise((resolve, reject) => {
       const shotAt = performance.now() + state.timer * 1000;
       const liveFrom = shotAt - CONFIG.liveSeconds * 1000;
-      let shown = 0, lastGrab = -Infinity;
+      let shown = 0, lastGrab = -Infinity, litAt = 0;
       const tick = () => {
-        if (s.cancelled) { hideCount(); el.rec.classList.remove('on'); reject(CANCEL); return; }
+        if (s.cancelled) { hideCount(); el.rec.classList.remove('on'); el.litFlash.classList.remove('on'); reject(CANCEL); return; }
         const now = performance.now();
-        if (now >= shotAt) {
+        if (now >= shotAt && s.screenFlash && !litAt) {
+          // จอขาวเต็มก่อน แล้วรอให้กล้องรับแสงสักครู่ค่อยถ่าย
+          litAt = now; hideCount(); el.litFlash.classList.add('on');
+        }
+        if (now >= shotAt && (!s.screenFlash || now - litAt >= 230)) {
           grabLive(s, i, CONFIG.liveSeconds * 1000);
           const shot = captureShot(g);
           s.shots[i] = shot;
           setThumb(i, shot);
           hideCount();
           el.rec.classList.remove('on');
+          el.litFlash.classList.remove('on');
           flash();
           shutterSound();
           resolve();
@@ -1382,6 +1561,16 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     state.session = s;
     setShooting(true);
     clearThumbs();
+    if (state.flash) {
+      if (state.facing === 'environment') {
+        if (!torchSupported() || !(await setTorch(true))) toast('เครื่องนี้เปิดไฟแฟลชจากเว็บไม่ได้ ถ่ายต่อแบบไม่มีแฟลช');
+        else s.torch = true;
+      } else {
+        s.screenFlash = true;
+        el.sCam.classList.add('lit');
+      }
+    }
+    const flashOff = () => { el.sCam.classList.remove('lit'); el.litFlash.classList.remove('on'); if (s.torch) setTorch(false); };
     try {
       for (let i = 0; i < g.count; i++) {
         markThumb(i);
@@ -1389,6 +1578,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
         await shootOne(s, i, g);
         await wait(i < g.count - 1 ? CONFIG.pauseAfterShot : 550, s);
       }
+      flashOff();
       setStatus('กำลังทำรูป');
       await Promise.all(s.pending);
       await fontsReady;
@@ -1397,6 +1587,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
       setShooting(false);
       showResult({ source: 'camera', layout: g.id, shots: s.shots, frames: s.frames.map((l) => l.filter((fr) => fr.b)), date: s.date });
     } catch (e) {
+      flashOff();
       state.session = null;
       setShooting(false);
       clearThumbs();
@@ -1817,6 +2008,12 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
   });
   el.btnShoot.addEventListener('click', startOrStop);
   el.btnFlip.addEventListener('click', flipCamera);
+  el.btnFlash.addEventListener('click', () => {
+    state.flash = !state.flash;
+    store.set('flash', state.flash);
+    setFlashLabel();
+    if (state.flash) toast(state.facing === 'environment' ? (torchSupported() ? 'จะเปิดไฟแฟลชค้างไว้ตอนถ่าย' : 'เครื่องนี้เปิดไฟแฟลชจากเว็บไม่ได้') : 'กล้องหน้าใช้จอขาวเป็นแฟลช เร่งความสว่างจอให้สุดจะยิ่งสว่าง');
+  });
   el.btnTimer.addEventListener('click', () => {
     const i = CONFIG.timers.indexOf(state.timer);
     state.timer = CONFIG.timers[(i + 1) % CONFIG.timers.length];
@@ -1877,9 +2074,10 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
   const camPanel = buildPanel(el.panelCam, 'cam');
   const resPanel = buildPanel(el.panelRes, 'res');
   buildSeg(el.segView, [['photo', 'รูป'], ['clip', 'คลิป']], 'photo', setView);
-  applyStage();
   buildThumbs();
+  setStageMode('print');
   setTimerLabel();
+  setFlashLabel();
   setStatus(readyText());
   setCamHint(HINT_IDLE);
   if (IN_APP) el.startMsg.textContent = 'เปิดจากในแอพอยู่ กล้องหรือการบันทึกไฟล์อาจใช้ไม่ได้ แตะเมนู ⋯ แล้วเลือกเปิดในเบราว์เซอร์';
