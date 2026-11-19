@@ -76,6 +76,8 @@ GitHub Pages ตั้งไว้ที่ Settings > Pages: Source = Deploy fr
 
 ## ดูจำนวนคนใช้ (GoatCounter ฟรี)
 
+เปิดอยู่แล้ว ดูตัวเลขได้ที่ https://tuphotobooth.goatcounter.com
+
 ไม่ต้องมีหลังบ้านเอง ใช้ GoatCounter นับให้
 
 1. สมัครที่ https://www.goatcounter.com/signup ตั้งรหัสเว็บ เช่น `tuphotobooth` (จะได้หน้า `tuphotobooth.goatcounter.com`)
