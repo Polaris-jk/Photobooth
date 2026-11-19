@@ -1,6 +1,8 @@
 # Tu.Photobooth (เวอร์ชัน 2.2)
 
-ใช้งานได้ที่ **https://polaris-jk.github.io/Photobooth/** (P ตัวใหญ่)
+ใช้งานได้ที่ **https://tuphotobooth.pages.dev/**
+
+ลิงก์เดิม https://polaris-jk.github.io/Photobooth/ ยังใช้ได้ ทั้งสองลิงก์อัปเดตพร้อมกันทุกครั้งที่ push ขึ้น `main` (Cloudflare Pages ดึงจาก repo นี้ ตั้งค่า: Framework None, Build command ว่าง, Build output `/`)
 
 ตู้ถ่ายรูปบนเว็บแบบตู้สติกเกอร์ ทำงานในเบราว์เซอร์ทั้งหมด ไม่ต้องมีเซิร์ฟเวอร์ ไม่ต้องมีที่เก็บไฟล์ และไม่มีค่าใช้จ่าย
 
