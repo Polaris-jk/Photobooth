@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Tu.Photobooth · เวอร์ชัน 2.2 -->
+<!-- Tu.Photobooth · เวอร์ชัน 2.3 -->
 <html lang="th">
 <head>
 <meta charset="utf-8">
@@ -43,7 +43,7 @@ body{min-height:100vh;min-height:100dvh;font-family:var(--ui);font-size:16px;lin
   background-color:var(--cobalt);
   background-image:radial-gradient(130% 95% at 50% 38%,rgba(255,255,255,.07) 0,rgba(255,255,255,0) 48%,rgba(6,12,60,.34) 100%),var(--grain);
   background-size:100% 100%,180px 180px;background-blend-mode:normal,soft-light}
-body.inside{background:var(--paper);color:var(--ink)}
+body.inside{background:var(--glow,#fff);color:var(--ink);transition:background-color .35s}
 button{font:inherit;color:inherit;background:none;border:0;border-radius:0;cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none}
 button:disabled{cursor:default}
 :focus{outline:none}
@@ -136,6 +136,8 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
 .thumbs li.done{animation:thumbIn .45s var(--spring)}
 @keyframes thumbIn{from{transform:scale(.7)}to{transform:none}}
 .thumbs canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.thumbs.many{height:32px;gap:5px}
+.thumbs.many li{border-radius:5px;font-size:11px}
 .bar{display:flex;justify-content:center;align-items:center;gap:12px;width:100%;max-width:420px}
 .shutter{flex:0 0 auto;margin:0 4px;width:80px;height:80px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 4px var(--ink);display:grid;place-items:center}
 .shutter span{width:58px;height:58px;border-radius:50%;background:var(--shoot)}
@@ -147,8 +149,14 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
 .round{min-width:52px}
 .round[aria-pressed="true"] svg{background:var(--ink);color:#ffd45a}
 /* แฟลชกล้องหน้า: ทั้งจอเป็นสีขาวตอนกดชัตเตอร์ ส่องหน้าแทนแฟลช */
-#sCam.lit .camhead{background:#fff;color:var(--ink)}
-.litflash{position:fixed;inset:0;z-index:40;background:#fff;opacity:0;pointer-events:none;transition:opacity .35s}
+#sCam.lit .camhead{background:var(--glow,#fff);color:var(--ink)}
+body.glow-dark #sCam.lit .camhead{color:#fff}
+.litflash{position:fixed;inset:0;z-index:40;background:var(--glow,#fff);opacity:0;pointer-events:none;transition:opacity .35s}
+/* เรืองแสงสีเข้ม: ตัวหนังสือในตู้เปลี่ยนเป็นสีขาวให้อ่านออก */
+body.glow-dark #sCam .round{color:rgba(255,255,255,.9)}
+body.glow-dark #camHint{color:rgba(255,255,255,.85)}
+body.glow-dark .thumbs li{background:rgba(255,255,255,.2);color:rgba(255,255,255,.8)}
+body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
 .litflash.on{opacity:1;transition:none}
 #camHint{max-width:26em;text-align:center;color:var(--muted)}
 #camHint:empty{display:none}
@@ -171,7 +179,8 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
 .item.pop{animation:itemPop .38s var(--spring)}
 @keyframes itemPop{0%{transform:scale(.86)}100%{transform:none}}
 .fx-item canvas{width:60px;height:60px;border-radius:12px;display:block;background:var(--mist)}
-.fx-item[aria-pressed="true"] canvas,.sw-item[aria-pressed="true"] canvas{box-shadow:0 0 0 2.5px var(--paper),0 0 0 5px var(--ink)}
+.fx-item[aria-pressed="true"] canvas,.sw-item[aria-pressed="true"] canvas,.gl-item[aria-pressed="true"] i{box-shadow:0 0 0 2.5px var(--glow,#fff),0 0 0 5px var(--ink)}
+#panelCam.panel-dark .fx-item[aria-pressed="true"] canvas,#panelCam.panel-dark .sw-item[aria-pressed="true"] canvas,#panelCam.panel-dark .gl-item[aria-pressed="true"] i{box-shadow:0 0 0 2.5px var(--glow),0 0 0 5px #fff}
 .sw-item canvas{width:40px;height:40px;border-radius:50%;display:block}
 .sw-item{padding-top:2px}
 .lay-item svg{display:block;height:52px;width:auto}
@@ -183,7 +192,22 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
 .seg{display:inline-flex;padding:4px;border-radius:999px;background:var(--mist)}
 .seg button{min-height:34px;padding:0 13px;border-radius:999px;font-size:14px;font-weight:500;color:var(--muted)}
 .seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
-.seg-count{display:flex;width:max-content;margin:0 auto 6px}
+.seg-count,.seg-border{display:flex;width:max-content;margin:0 auto 6px}
+.seg-count button{min-width:36px;padding:0 10px}
+.seg-lbl{display:flex;align-items:center;padding:0 8px 0 10px;font-size:13px;font-weight:500;color:var(--muted);white-space:nowrap}
+.seg-dark .seg-lbl{color:rgba(255,255,255,.72)}
+/* เรืองแสง */
+.gl-item{position:relative;padding-top:2px}
+.gl-item i{position:relative;display:block;width:40px;height:40px;border-radius:50%;background:var(--c);box-shadow:inset 0 0 0 1px rgba(15,27,77,.16)}
+.gl-none i::after{content:'';position:absolute;left:50%;top:50%;width:24px;height:2px;border-radius:1px;background:#9aa3c4;transform:translate(-50%,-50%) rotate(-45deg)}
+.gl-pick i{background:conic-gradient(#ff5f6d,#ffc371,#f9f871,#6fe3b5,#5ac8fa,#7c4dff,#ef45c9,#ff5f6d)}
+.gl-pick b{position:absolute;inset:11px;border-radius:50%;box-shadow:0 0 0 2px #fff}
+.gl-pick input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0}
+.glow-amt{display:flex;align-items:center;gap:12px;max-width:340px;margin:4px auto 0;padding:0 10px;font-size:13px;font-weight:500;color:var(--muted)}
+.glow-amt input{flex:1;min-width:0;height:28px;accent-color:var(--shoot)}
+.glow-amt output{min-width:3em;text-align:right;font-variant-numeric:tabular-nums}
+.glow-amt.off{opacity:.4}
+.panel-dark .glow-amt{color:rgba(255,255,255,.85)}
 .panel-dark .tabs button{color:rgba(255,255,255,.7)}
 .panel-dark .tabs button[aria-selected="true"]{color:#fff}
 .panel-dark .item{color:rgba(255,255,255,.72)}
@@ -224,7 +248,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
 @keyframes bannerIn{from{transform:translate(-50%,-140%)}to{transform:translate(-50%,0)}}
 .btn-sm{min-height:34px;padding:0 14px;font-size:14px;box-shadow:none;flex:0 0 auto}
 .banner-x{width:30px;height:30px;font-size:20px;line-height:1;color:rgba(255,255,255,.7);flex:0 0 auto}
-@media (max-height:680px){.thumbs{height:38px}}
+@media (max-height:680px){.thumbs{height:38px}.thumbs.many{height:28px}}
 @media (max-width:360px){.seg button,.tabs button{padding:0 10px}}
 @media (prefers-reduced-motion:reduce){
   .screen.on,.sample,.result.deliver .print,.count.pop,.flash.go,.rec i,.item.pop,.thumbs li.done,.lightbox{animation:none}
@@ -241,7 +265,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
       <div class="slot"></div>
       <div class="mouth"><div class="sample"><i></i><i></i><i></i><i></i><b id="sampleTitle">Tu.Photobooth</b></div></div>
     </div>
-    <p class="lead">ถ่ายได้ 1–4 รูป ได้ทั้งรูปทั้งคลิป เซฟลงเครื่องได้เลย</p>
+    <p class="lead">ถ่ายได้ 1–9 รูป ได้ทั้งรูปทั้งคลิป เซฟลงเครื่องได้เลย</p>
     <button class="btn btn-paper btn-xl" id="btnOpen" type="button">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2.3l1.4-2h7.6l1.4 2h2.3A1.5 1.5 0 0 1 21 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z"/><circle cx="12" cy="13" r="3.6"/></svg>
       เปิดกล้อง
@@ -328,6 +352,8 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     defaultLayout: 'strip4',   // รูปแบบเริ่มต้น (ดู id ใน LAYOUTS)
     defaultFilter: 'normal',   // ฟิลเตอร์เริ่มต้น (ดู id ใน FILTERS)
     defaultStyle: 'white',     // กรอบเริ่มต้น (ดู id ใน STYLES)
+    defaultBorder: 'normal',   // ความหนาขอบเริ่มต้น: none, thin, normal, thick
+    filterSample: 'img/sample.jpg',   // รูปตัวอย่างบนปุ่มฟิลเตอร์ เปลี่ยนเป็นรูปอื่นได้ (ใช้รูปจัตุรัส)
     liveSeconds: 2,            // แต่ละช่องในคลิปขยับกี่วินาที (ช่วงก่อนชัตเตอร์)
     liveFps: 15,               // เฟรมต่อวินาทีของคลิป
     clipLoops: 3,              // ไฟล์คลิปวนกี่รอบ (2 วิ × 3 ≈ 6 วิ)
@@ -340,7 +366,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
 
   /* เลขเวอร์ชัน: ทุกครั้งที่อัปเดต ให้เปลี่ยนตรงนี้และใน version.json ให้ตรงกัน
      ICON_VERSION: เพิ่มเมื่อเปลี่ยนไอคอน คนที่เพิ่มแอพไว้บนหน้าจอโฮมจะได้รับคำแนะนำให้เพิ่มใหม่ */
-  const APP_VERSION = '2.2.0';
+  const APP_VERSION = '2.3.0';
   const ICON_VERSION = 3;
 
   /* ---------- รูปแบบเฟรม ---------- */
@@ -348,11 +374,40 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     { id: 'single', count: 1, kind: 'single', name: 'เดี่ยว' },      // แบบโพลารอยด์ 4:5
     { id: 'strip2', count: 2, kind: 'strip', name: 'แถบ' },
     { id: 'double2', count: 2, kind: 'double', name: 'แถบคู่' },     // 2 แถบในแผ่นเดียว ตัดแบ่งเพื่อนได้
+    { id: 'duo2', count: 2, kind: 'duo', name: 'แนวนอน' },          // 2 รูปข้างกัน การ์ดแนวนอน
     { id: 'strip3', count: 3, kind: 'strip', name: 'แถบ' },
     { id: 'double3', count: 3, kind: 'double', name: 'แถบคู่' },
+    { id: 'hero3', count: 3, kind: 'hero', name: 'ใหญ่ + เล็ก' },    // รูปแรกใหญ่ อีก 2 รูปเรียงด้านล่าง
     { id: 'strip4', count: 4, kind: 'strip', name: 'แถบ' },          // 2×6 นิ้ว
     { id: 'double4', count: 4, kind: 'double', name: 'แถบคู่' },     // 4×6 นิ้ว
-    { id: 'grid4', count: 4, kind: 'grid', name: 'ตาราง 2×2' },      // 4×6 นิ้ว
+    { id: 'grid4', count: 4, kind: 'grid', cols: 2, rows: 2, name: 'ตาราง' },   // 4×6 นิ้ว
+    { id: 'hero4', count: 4, kind: 'hero', name: 'ใหญ่ + เล็ก' },    // รูปแรกใหญ่ อีก 3 รูปเรียงด้านล่าง
+    { id: 'grid6', count: 6, kind: 'grid', cols: 2, rows: 3, name: 'ตาราง' },
+    { id: 'grid9', count: 9, kind: 'grid', cols: 3, rows: 3, name: 'ตาราง' },
+  ];
+
+  /* ---------- ความหนาขอบกรอบ (k คูณกับขอบปกติ) ---------- */
+  const BORDERS = [
+    { id: 'none', name: 'ไม่มี', k: 0 },
+    { id: 'thin', name: 'บาง', k: 0.5 },
+    { id: 'normal', name: 'ปกติ', k: 1 },
+    { id: 'thick', name: 'หนา', k: 2 },
+  ];
+
+  /* ---------- เรืองแสง: สีพื้นจอในตู้ ส่องหน้าเป็นสีนั้น ---------- */
+  const GLOWS = [
+    { id: 'none', name: 'ไม่มี', color: '#ffffff' },
+    { id: 'pink', name: 'ชมพู', color: '#ff7eb3' },
+    { id: 'peach', name: 'พีช', color: '#ffb08a' },
+    { id: 'yellow', name: 'เหลือง', color: '#ffe15a' },
+    { id: 'mint', name: 'มิ้นต์', color: '#6fe3b5' },
+    { id: 'aqua', name: 'ฟ้า', color: '#7fdcf5' },
+    { id: 'lilac', name: 'ม่วงอ่อน', color: '#c9a7ff' },
+    { id: 'purple', name: 'ม่วง', color: '#7c4dff' },
+    { id: 'blue', name: 'น้ำเงิน', color: '#3d63ff' },
+    { id: 'magenta', name: 'บานเย็น', color: '#ef45c9' },
+    { id: 'orange', name: 'ส้ม', color: '#ff8a3d' },
+    { id: 'red', name: 'แดง', color: '#ff4040' },
   ];
 
   /* ---------- สีกรอบและลาย (bg = พื้น, fg = สีลาย, ink = สีตัวหนังสือ) ---------- */
@@ -421,39 +476,77 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
   const CLIP_SCALE = 0.5;
   const FRAME_MS = 1000 / CONFIG.liveFps;
 
-  /* ---------- ขนาดและตำแหน่งช่องรูปของแต่ละรูปแบบ (พิกเซลไฟล์จริง) ---------- */
-  function buildGeometry(def) {
-    const g = { id: def.id, count: def.count, kind: def.kind, name: def.name, slots: [], footers: [], cuts: [] };
+  /* ---------- ขนาดและตำแหน่งช่องรูปของแต่ละรูปแบบ (พิกเซลไฟล์จริง) ----------
+     ขอบกับช่องไฟเปลี่ยนตามความหนาที่เลือก สัดส่วนช่องรูปคงเดิม เลยเปลี่ยนความหนาหลังถ่ายได้ */
+  function buildGeometry(def, bd) {
+    const k = bd ? bd.k : 1;
+    const E = (v) => Math.round((v * k) / 2) * 2;
+    const R4 = (v) => Math.ceil(v / 4) * 4;
+    const g = { id: def.id, key: def.id + '|' + (bd ? bd.id : 'normal'), count: def.count, kind: def.kind, name: def.name, slots: [], footers: [], cuts: [], font: 1.35 };
     if (def.kind === 'strip' || def.kind === 'double') {
-      const pad = 60, gap = 30, sw = 1080, sh = 780, copies = def.kind === 'double' ? 2 : 1;
+      const pad = E(60), gap = E(30), sw = 1080, sh = 780, copies = def.kind === 'double' ? 2 : 1, cw = sw + pad * 2;
       const fy = pad + def.count * sh + (def.count - 1) * gap;
-      const H = Math.ceil((fy + 330) / 4) * 4;
-      g.W = 1200 * copies; g.H = H; g.slotW = sw; g.slotH = sh;
+      g.W = cw * copies; g.H = R4(fy + 330); g.font = 1;
       for (let c = 0; c < copies; c++) {
-        for (let i = 0; i < def.count; i++) g.slots.push({ x: c * 1200 + pad, y: pad + i * (sh + gap), w: sw, h: sh, src: i });
-        g.footers.push({ x: c * 1200 + pad, y: fy, w: sw, h: H - fy });
+        for (let i = 0; i < def.count; i++) g.slots.push({ x: c * cw + pad, y: pad + i * (sh + gap), w: sw, h: sh, src: i });
+        g.footers.push({ x: c * cw + pad, y: fy, w: sw, h: g.H - fy });
       }
-      if (copies === 2) g.cuts.push(1200);
+      if (copies === 2) g.cuts.push(cw);
     } else if (def.kind === 'grid') {
-      const W = 2400, H = 3600, pad = 80, gap = 40, foot = 400;
-      const sw = (W - pad * 2 - gap) / 2, sh = (H - pad - foot - gap) / 2;
-      g.W = W; g.H = H; g.slotW = sw; g.slotH = sh;
-      for (let i = 0; i < 4; i++) g.slots.push({ x: pad + (i % 2) * (sw + gap), y: pad + Math.floor(i / 2) * (sh + gap), w: sw, h: sh, src: i });
-      const fy = pad + sh * 2 + gap;
-      g.footers.push({ x: pad, y: fy, w: W - pad * 2, h: H - fy });
+      const pad = E(80), gap = E(40), cols = def.cols, rows = def.rows;
+      const size = { 4: [1100, 1540, 400], 6: [1100, 1000, 380], 9: [720, 720, 360] }[def.count];
+      const sw = size[0], sh = size[1], fy = pad + rows * sh + (rows - 1) * gap;
+      g.W = cols * sw + (cols - 1) * gap + pad * 2; g.H = R4(fy + size[2]);
+      for (let i = 0; i < def.count; i++) g.slots.push({ x: pad + (i % cols) * (sw + gap), y: pad + Math.floor(i / cols) * (sh + gap), w: sw, h: sh, src: i });
+      g.footers.push({ x: pad, y: fy, w: g.W - pad * 2, h: g.H - fy });
+    } else if (def.kind === 'duo') {
+      const pad = E(80), gap = E(40), sw = 1100, sh = 1300, fy = pad + sh;
+      g.W = sw * 2 + gap + pad * 2; g.H = R4(fy + 300);
+      for (let i = 0; i < 2; i++) g.slots.push({ x: pad + i * (sw + gap), y: pad, w: sw, h: sh, src: i });
+      g.footers.push({ x: pad, y: fy, w: g.W - pad * 2, h: g.H - fy });
+    } else if (def.kind === 'hero') {
+      // รูปแรกใหญ่ด้านบน ที่เหลือเรียงเป็นแถวด้านล่าง ทุกช่องสัดส่วน 4:3 เท่ากัน
+      const pad = E(80), gap = E(40), n = def.count - 1;
+      const sw = n === 2 ? 1080 : 720, sh = sw * 0.75;
+      const bw = sw * n + gap * (n - 1), bh = Math.round(bw * 0.75);
+      const fy = pad + bh + gap + sh;
+      g.W = bw + pad * 2; g.H = R4(fy + 400);
+      g.slots.push({ x: pad, y: pad, w: bw, h: bh, src: 0 });
+      for (let i = 0; i < n; i++) g.slots.push({ x: pad + i * (sw + gap), y: pad + bh + gap, w: sw, h: sh, src: i + 1 });
+      g.footers.push({ x: pad, y: fy, w: bw, h: g.H - fy });
     } else {
-      const W = 1200, H = 1500, pad = 60, s = 1080;
-      g.W = W; g.H = H; g.slotW = s; g.slotH = s;
+      const pad = E(60), s = 1080;
+      g.W = s + pad * 2; g.H = R4(pad + s + 360); g.font = 1;
       g.slots.push({ x: pad, y: pad, w: s, h: s, src: 0 });
-      g.footers.push({ x: pad, y: pad + s, w: s, h: H - pad - s });
+      g.footers.push({ x: pad, y: pad + s, w: s, h: g.H - pad - s });
     }
+    // ความกว้างหาร 4 ลงตัว คลิป (ครึ่งขนาด) จะได้เป็นเลขคู่
+    const dx = (R4(g.W) - g.W) / 2;
+    if (dx) {
+      g.W = R4(g.W);
+      g.slots.forEach((sl) => { sl.x += dx; });
+      g.footers.forEach((f) => { f.x += dx; });
+      g.cuts = g.cuts.map((c) => c + dx);
+    }
+    g.slotW = g.slots[0].w; g.slotH = g.slots[0].h;   // ช่องแรกใหญ่สุดเสมอ
     g.aspect = g.slotW / g.slotH;
     g.bySrc = [];
-    for (let i = 0; i < g.count; i++) g.bySrc.push(g.slots.filter((s) => s.src === i));
+    for (let i = 0; i < g.count; i++) g.bySrc.push(g.slots.filter((sl) => sl.src === i));
     return g;
   }
-  const GEO = {};
-  LAYOUTS.forEach((d) => { GEO[d.id] = buildGeometry(d); });
+  const LAYOUT_BY = {};
+  const GEO = {};            // ขอบปกติ ใช้ดูจำนวนรูปกับสัดส่วนช่อง
+  LAYOUTS.forEach((d) => { LAYOUT_BY[d.id] = d; GEO[d.id] = buildGeometry(d, null); });
+  const COUNTS = Array.from(new Set(LAYOUTS.map((l) => l.count))).sort((a, b) => a - b);
+  const BORDER_BY = {};
+  BORDERS.forEach((b) => { BORDER_BY[b.id] = b; });
+  const geoCache = {};
+  // ขนาดจริงของรูปแบบตามความหนาขอบที่เลือกอยู่
+  function geoFor(id, border) {
+    const bd = BORDER_BY[border || state.border] || BORDER_BY.normal;
+    const key = id + '|' + bd.id;
+    return geoCache[key] || (geoCache[key] = buildGeometry(LAYOUT_BY[id], bd));
+  }
   const STYLE_BY = {};
   STYLES.forEach((s) => { STYLE_BY[s.id] = s; });
 
@@ -631,7 +724,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
   function drawFooter(ctx, g, k, st, title, date) {
     const patterned = st.kind !== 'solid';
     const hand = g.kind === 'single';   // แบบเดี่ยวใช้ลายมือเหมือนเขียนใต้รูปโพลารอยด์
-    const base = g.kind === 'grid' ? 1.35 : 1;
+    const base = g.font;
     const tFont = hand ? 'Mali, "IBM Plex Sans Thai", cursive' : 'Chonburi, "IBM Plex Sans Thai", Georgia, serif';
     const dFont = hand ? 'Mali, "IBM Plex Sans Thai", cursive' : '"IBM Plex Sans Thai", system-ui, sans-serif';
     const tSize = (hand ? 84 : 78) * base * k, dSize = (hand ? 40 : 34) * base * k;
@@ -922,11 +1015,15 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     layout: pickValid(store.get('layout', CONFIG.defaultLayout), (v) => !!GEO[v], GEO[CONFIG.defaultLayout] ? CONFIG.defaultLayout : 'strip4'),
     filter: pickValid(store.get('filter', CONFIG.defaultFilter), (v) => AVAILABLE_FILTERS.some((f) => f.id === v), 'normal'),
     style: pickValid(store.get('style', CONFIG.defaultStyle), (v) => !!STYLE_BY[v], STYLES[0].id),
+    border: pickValid(store.get('border', CONFIG.defaultBorder), (v) => !!BORDER_BY[v], 'normal'),
+    glow: pickValid(store.get('glow', 'none'), (v) => v === 'custom' || GLOWS.some((x) => x.id === v), 'none'),
+    glowCustom: pickValid(store.get('glowCustom', '#ff7eb3'), (v) => /^#[0-9a-f]{6}$/i.test(v), '#ff7eb3'),
+    glowAmt: pickValid(store.get('glowAmt', 100), (v) => typeof v === 'number' && v >= 10 && v <= 100, 100),
     flash: store.get('flash', false) === true,
     session: null,
     result: null,
   };
-  const geo = () => GEO[state.layout];
+  const geo = () => geoFor(state.layout);
   const curFilter = () => FILTER_BY[state.filter] || FILTERS[0];
   const curStyle = () => STYLE_BY[state.style] || STYLES[0];
 
@@ -1114,21 +1211,25 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     return c;
   }
   function buildPanel(root, where) {
+    const cam = where === 'cam';
     root.innerHTML = [
       '<div class="tabs" role="tablist">',
       '<button type="button" role="tab" data-tab="filter">ฟิลเตอร์</button>',
       '<button type="button" role="tab" data-tab="layout">รูปแบบ</button>',
       '<button type="button" role="tab" data-tab="style">กรอบ</button>',
+      cam ? '<button type="button" role="tab" data-tab="glow">เรืองแสง</button>' : '',
       '<i class="tab-ink" aria-hidden="true"></i></div>',
       '<div class="pane" data-pane="filter"><div class="rail" data-rail="filter"></div></div>',
-      '<div class="pane" data-pane="layout">', where === 'cam' ? '<div class="seg seg-count" role="group" aria-label="จำนวนรูป"></div>' : '', '<div class="rail" data-rail="layout"></div></div>',
-      '<div class="pane" data-pane="style"><p class="pick-name"></p><div class="rail" data-rail="style"></div></div>',
+      '<div class="pane" data-pane="layout">', cam ? '<div class="seg seg-count" role="group" aria-label="จำนวนรูป"></div>' : '', '<div class="rail" data-rail="layout"></div></div>',
+      `<div class="pane" data-pane="style"><div class="seg seg-border${cam ? '' : ' seg-dark'}" role="group" aria-label="ความหนาขอบ"></div><div class="rail" data-rail="style"></div><p class="pick-name"></p></div>`,
+      cam ? '<div class="pane" data-pane="glow"><div class="rail" data-rail="glow"></div><label class="glow-amt"><span>ความเข้ม</span><input type="range" min="10" max="100" step="5"><output></output></label></div>' : '',
     ].join('');
     const P = {
       root, where, tab: 'filter',
       rails: { filter: root.querySelector('[data-rail="filter"]'), layout: root.querySelector('[data-rail="layout"]'), style: root.querySelector('[data-rail="style"]') },
-      count: root.querySelector('.seg-count'), name: root.querySelector('.pick-name'), ink: root.querySelector('.tab-ink'),
+      count: root.querySelector('.seg-count'), border: root.querySelector('.seg-border'), name: root.querySelector('.pick-name'), ink: root.querySelector('.tab-ink'),
     };
+    if (cam) P.rails.glow = root.querySelector('[data-rail="glow"]');
     root.querySelectorAll('[role="tab"]').forEach((b) => b.addEventListener('click', () => setTab(P, b.dataset.tab)));
     AVAILABLE_FILTERS.forEach((f) => {
       const b = document.createElement('button');
@@ -1154,7 +1255,14 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
       b.addEventListener('click', () => { popItem(b); pickStyle(st.id); });
       P.rails.style.appendChild(b);
     });
-    if (P.count) buildSeg(P.count, [1, 2, 3, 4].map((n) => [n, n + ' รูป']), geo().count, pickCount);
+    if (P.count) {
+      buildSeg(P.count, COUNTS.map((n) => [n, String(n)]), geo().count, pickCount);
+      P.count.querySelectorAll('button').forEach((b) => b.setAttribute('aria-label', b.dataset.v + ' รูป'));
+      P.count.insertAdjacentHTML('afterbegin', '<span class="seg-lbl" aria-hidden="true">จำนวนรูป</span>');
+    }
+    buildSeg(P.border, BORDERS.map((b) => [b.id, b.name]), state.border, pickBorder);
+    P.border.insertAdjacentHTML('afterbegin', '<span class="seg-lbl" aria-hidden="true">ขอบ</span>');
+    if (cam) buildGlow(P);
     fillLayoutRail(P);
     syncPanel(P);
     setTab(P, 'filter');
@@ -1166,7 +1274,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     const r = state.result;
     if (!r) return [];
     const g = GEO[r.layout];
-    return LAYOUTS.filter((l) => l.count === g.count && Math.abs(GEO[l.id].aspect - g.aspect) < 0.001);
+    return LAYOUTS.filter((l) => l.count === g.count && l.kind !== 'hero' && g.kind !== 'hero' && Math.abs(GEO[l.id].aspect - g.aspect) < 0.001);
   }
   function fillLayoutRail(P) {
     const rail = P.rails.layout;
@@ -1176,7 +1284,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
       b.type = 'button';
       b.className = 'item lay-item';
       b.dataset.id = l.id;
-      b.innerHTML = layoutIcon(GEO[l.id]) + `<span>${l.name}</span>`;
+      b.innerHTML = layoutIcon(geoFor(l.id)) + `<span>${l.name}</span>`;
       b.addEventListener('click', () => { popItem(b); pickLayout(l.id, P.where); });
       rail.appendChild(b);
     });
@@ -1188,8 +1296,10 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
   }
   function syncPanel(P) {
     const sel = { filter: state.filter, style: state.style, layout: P.where === 'res' && state.result ? state.result.layout : state.layout };
-    Object.keys(P.rails).forEach((k) => { P.rails[k].querySelectorAll('.item').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === sel[k]))); });
+    ['filter', 'layout', 'style'].forEach((k) => { P.rails[k].querySelectorAll('.item').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === sel[k]))); });
     if (P.count) syncSeg(P.count, geo().count);
+    syncSeg(P.border, state.border);
+    if (P.rails.glow) syncGlow(P);
     P.name.textContent = curStyle().name;
   }
   function centerSelected(rail) {
@@ -1212,32 +1322,101 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
   }
   function syncAll() { panels.forEach(syncPanel); }
 
-  /* ---------- รูปตัวอย่างบนปุ่มฟิลเตอร์ ---------- */
+  /* ---------- รูปตัวอย่างบนปุ่มฟิลเตอร์: รูปนิ่งรูปเดียว ใส่ทุกฟิลเตอร์ให้เทียบกันได้ ---------- */
   const snapCv = document.createElement('canvas');
   snapCv.width = snapCv.height = 160;
   const snapCtx = snapCv.getContext('2d');
+  const fxSample = new Image();
+  let fxSampleReady = false;
+  fxSample.onload = () => { fxSampleReady = true; panels.forEach((P) => { P.fxDone = false; refreshFxThumbs(P); }); };
+  fxSample.src = CONFIG.filterSample;
   function refreshFxThumbs(P) {
-    if (P.tab !== 'filter') return;
-    let ready = false;
-    if (P.where === 'cam') {
-      if (el.cam.videoWidth) { drawCamera(snapCtx, 160, 160); ready = true; }
-    } else if (state.result && state.result.shots[0]) {
-      const s = state.result.shots[0];
-      drawCover(snapCtx, s, s.width, s.height, 160, 160, false);
-      ready = true;
-    }
-    if (!ready) return;
+    if (!P || P.tab !== 'filter' || P.fxDone || !fxSampleReady) return;
+    drawCover(snapCtx, fxSample, fxSample.naturalWidth, fxSample.naturalHeight, 160, 160, false);
     P.rails.filter.querySelectorAll('.fx-item').forEach((b) => {
       const c = b.querySelector('canvas'), x = c.getContext('2d');
       drawFiltered(x, snapCv, FILTER_BY[b.dataset.id], 120, 120, [[0, 0, 120, 120]], 3);
     });
+    P.fxDone = true;
   }
-  let thumbTimer = 0;
-  function startThumbTimer() {
-    clearInterval(thumbTimer);
-    thumbTimer = setInterval(() => { if (state.screen === 'cam' && !state.session && !document.hidden) refreshFxThumbs(camPanel); }, 1300);
+
+  /* ---------- เรืองแสง ---------- */
+  function buildGlow(P) {
+    const rail = P.rails.glow;
+    const add = (id, name, color, cls) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'item gl-item' + (cls ? ' ' + cls : '');
+      b.dataset.id = id;
+      b.setAttribute('aria-label', id === 'none' ? 'ไม่เรืองแสง' : 'เรืองแสงสี' + name);
+      const i = document.createElement('i');
+      i.style.setProperty('--c', color);
+      b.appendChild(i);
+      b.addEventListener('click', () => { popItem(b); pickGlow(id); });
+      rail.appendChild(b);
+    };
+    add('none', 'ไม่มี', '#ffffff', 'gl-none');
+    // เลือกสีเอง: แตะแล้วเปิดตัวเลือกสีของเครื่อง
+    const pick = document.createElement('label');
+    pick.className = 'item gl-item gl-pick';
+    pick.dataset.id = 'custom';
+    pick.innerHTML = '<i><b></b></i><input type="color" aria-label="เลือกสีเอง">';
+    const inp = pick.querySelector('input');
+    inp.value = state.glowCustom;
+    inp.addEventListener('input', () => setGlowCustom(inp.value, false));
+    inp.addEventListener('change', () => setGlowCustom(inp.value, true));
+    pick.addEventListener('click', () => { popItem(pick); if (state.glow !== 'custom') pickGlow('custom'); });
+    rail.appendChild(pick);
+    GLOWS.slice(1).forEach((x) => add(x.id, x.name, x.color));
+    P.glowBox = P.root.querySelector('.glow-amt');
+    P.glowAmt = P.glowBox.querySelector('input');
+    P.glowOut = P.glowBox.querySelector('output');
+    P.glowAmt.setAttribute('aria-label', 'ความเข้มของแสง');
+    P.glowAmt.addEventListener('input', () => { state.glowAmt = +P.glowAmt.value; applyGlow(); });
+    P.glowAmt.addEventListener('change', () => store.set('glowAmt', state.glowAmt));
   }
-  function stopThumbTimer() { clearInterval(thumbTimer); }
+  function glowBase() {
+    if (state.glow === 'custom') return state.glowCustom;
+    return (GLOWS.find((x) => x.id === state.glow) || GLOWS[0]).color;
+  }
+  // ความเข้ม 100% = สีเต็ม น้อยลง = ผสมขาวมากขึ้น
+  function glowColor() {
+    if (state.glow === 'none') return '#ffffff';
+    const a = state.glowAmt / 100;
+    return '#' + hexRgb(glowBase()).map((v) => Math.round(255 + (v - 255) * a).toString(16).padStart(2, '0')).join('');
+  }
+  function luminance(hex) {
+    const c = hexRgb(hex).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  }
+  function syncGlow(P) {
+    P.rails.glow.querySelectorAll('.gl-item').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === state.glow)));
+    P.rails.glow.querySelector('.gl-pick b').style.background = state.glowCustom;
+    P.glowAmt.value = String(state.glowAmt);
+    P.glowOut.textContent = state.glowAmt + '%';
+    P.glowAmt.disabled = state.glow === 'none';
+    P.glowBox.classList.toggle('off', state.glow === 'none');
+  }
+  function applyGlow() {
+    const col = glowColor(), dark = luminance(col) < 0.21;
+    document.documentElement.style.setProperty('--glow', col);
+    document.body.classList.toggle('glow-dark', dark);
+    el.panelCam.classList.toggle('panel-dark', dark);
+    el.panelCam.querySelectorAll('.seg').forEach((sg) => sg.classList.toggle('seg-dark', dark));
+    panels.forEach((P) => { if (P.rails.glow) syncGlow(P); });
+  }
+  function pickGlow(id) {
+    state.glow = id;
+    store.set('glow', id);
+    applyGlow();
+  }
+  function setGlowCustom(hex, save) {
+    if (!/^#[0-9a-f]{6}$/i.test(hex)) return;
+    state.glowCustom = hex;
+    state.glow = 'custom';
+    if (save) { store.set('glowCustom', hex); store.set('glow', 'custom'); }
+    applyGlow();
+  }
 
   /* ---------- เลือกตัวเลือก ---------- */
   function pickFilter(id) {
@@ -1254,6 +1433,23 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     store.set('style', id);
     syncAll();
     if (state.result) resultChanged();
+  }
+  function pickBorder(id) {
+    if (!BORDER_BY[id] || state.border === id) return;
+    state.border = id;
+    store.set('border', id);
+    applyStage();
+    panels.forEach(fillLayoutRail);
+    syncAll();
+    const r = state.result;
+    if (r) {
+      r.bgKey = '';
+      const g = geoFor(r.layout);
+      el.cvLive.width = Math.round(g.W * CLIP_SCALE);
+      el.cvLive.height = Math.round(g.H * CLIP_SCALE);
+      sizePrint();
+      resultChanged();
+    }
   }
   function pickCount(n) {
     const cur = geo();
@@ -1401,7 +1597,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     const w = Math.round(rect.width * dpr), h = Math.round((w * g.H) / g.W);
     if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
     const k = w / g.W, ctx = cv.getContext('2d'), today = fmtDate(new Date());
-    const key = [g.id, state.style, w, today].join('|');
+    const key = [g.key, state.style, w, today].join('|');
     if (key !== printBgKey) {
       printBg.width = w; printBg.height = h;
       paintPrint(printBg.getContext('2d'), g, k, curStyle(), CONFIG.title, today);
@@ -1425,13 +1621,10 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
   }
   function startPreview() {
     if (!preview.on) { preview.on = true; preview.raf = requestAnimationFrame(previewLoop); }
-    startThumbTimer();
-    refreshFxThumbs(camPanel);
   }
   function stopPreview() {
     preview.on = false;
     cancelAnimationFrame(preview.raf);
-    stopThumbTimer();
   }
 
   /* ---------- แฟลช: กล้องหน้าใช้จอขาว กล้องหลังใช้ไฟแฟลชของเครื่อง ---------- */
@@ -1461,6 +1654,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
   }
   function buildThumbs() {
     el.thumbs.textContent = '';
+    el.thumbs.classList.toggle('many', geo().count > 4);
     for (let i = 0; i < geo().count; i++) {
       const li = document.createElement('li');
       li.innerHTML = `<span>${i + 1}</span>`;
@@ -1516,13 +1710,16 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     s.frames[i].push(fr);
     s.pending.push(canvasBlob(grabCv, 'image/jpeg', 0.85).then((b) => { fr.b = b; }));
   }
-  function captureShot(g) {
-    const c = document.createElement('canvas');
-    c.width = g.slotW; c.height = g.slotH;
-    drawCamera(c.getContext('2d'), g.slotW, g.slotH);
+  function captureShot(g, i) {
+    const sl = g.bySrc[i][0], c = document.createElement('canvas');
+    c.width = sl.w; c.height = sl.h;
+    drawCamera(c.getContext('2d'), sl.w, sl.h);
     return c;
   }
   function shootOne(s, i, g) {
+    const sl = g.bySrc[i][0];
+    grabCv.width = Math.round(sl.w * CLIP_SCALE);
+    grabCv.height = Math.round(sl.h * CLIP_SCALE);
     return new Promise((resolve, reject) => {
       const shotAt = performance.now() + state.timer * 1000;
       const liveFrom = shotAt - CONFIG.liveSeconds * 1000;
@@ -1536,7 +1733,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
         }
         if (now >= shotAt && (!s.screenFlash || now - litAt >= 230)) {
           grabLive(s, i, CONFIG.liveSeconds * 1000);
-          const shot = captureShot(g);
+          const shot = captureShot(g, i);
           s.shots[i] = shot;
           setThumb(i, shot);
           hideCount();
@@ -1569,8 +1766,6 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     const g = geo();
     const s = { cancelled: false, layout: g.id, shots: [], frames: [], pending: [], date: new Date() };
     for (let i = 0; i < g.count; i++) s.frames.push([]);
-    grabCv.width = Math.round(g.slotW * CLIP_SCALE);
-    grabCv.height = Math.round(g.slotH * CLIP_SCALE);
     state.session = s;
     if (bannerKind === 'update') hideBanner();
     setShooting(true);
@@ -1624,10 +1819,11 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     if (!files.length || state.session) return;
     let g = geo();
     if (files.length < g.count) {
-      const alt = LAYOUTS.find((l) => l.count === files.length && l.kind === g.kind) || LAYOUTS.find((l) => l.count === files.length);
+      const n = Math.max.apply(null, COUNTS.filter((c) => c <= files.length));
+      const alt = LAYOUTS.find((l) => l.count === n && l.kind === g.kind) || LAYOUTS.find((l) => l.count === n);
       setCamLayout(alt.id);
       g = geo();
-      toast(`เลือกมา ${files.length} รูป เลยเปลี่ยนเป็นแบบ${alt.name} ${files.length} รูป`);
+      toast(n === files.length ? `เลือกมา ${n} รูป เลยเปลี่ยนเป็นแบบ${alt.name} ${n} รูป` : `เลือกมา ${files.length} รูป ใช้ ${n} รูปแรกในแบบ${alt.name}`);
     } else if (files.length > g.count) {
       toast(`ใช้ ${g.count} รูปแรกที่เลือก`);
     }
@@ -1639,9 +1835,9 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
       for (const file of files.slice(0, g.count)) {
         const img = await loadImageFile(file);
         if (!img || !img.naturalWidth) { toast('มีรูปที่เปิดไม่ได้ ลองรูปอื่นนะ'); return; }
-        const c = document.createElement('canvas');
-        c.width = g.slotW; c.height = g.slotH;
-        drawCover(c.getContext('2d'), img, img.naturalWidth, img.naturalHeight, g.slotW, g.slotH, false);
+        const sl = g.bySrc[shots.length][0], c = document.createElement('canvas');
+        c.width = sl.w; c.height = sl.h;
+        drawCover(c.getContext('2d'), img, img.naturalWidth, img.naturalHeight, sl.w, sl.h, false);
         shots.push(c);
       }
       await fontsReady;
@@ -1658,7 +1854,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
   const cvStill = document.createElement('canvas');
   const liveCtx = el.cvLive.getContext('2d');
   function showResult(spec) {
-    const g = GEO[spec.layout];
+    const g = geoFor(spec.layout);
     const r = {
       source: spec.source, layout: spec.layout, shots: spec.shots, frames: spec.frames, date: spec.date,
       name: 'tu-photobooth-' + stamp(spec.date),
@@ -1693,7 +1889,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
   function sizePrint() {
     const r = state.result;
     if (!r) return;
-    const g = GEO[r.layout];
+    const g = geoFor(r.layout);
     const avail = Math.min((el.result.clientWidth || window.innerWidth - 40) - 28, 520);
     const maxH = Math.min(window.innerHeight * 0.56, 600);
     const s = Math.min(avail / g.W, maxH / g.H);
@@ -1712,7 +1908,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     const r = state.result;
     if (!r) return;
     const token = ++r.stillToken;
-    const g = GEO[r.layout];
+    const g = geoFor(r.layout);
     cvStill.width = g.W;
     cvStill.height = g.H;
     const ctx = cvStill.getContext('2d');
@@ -1747,7 +1943,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     applyStage();
     buildThumbs();
     fillLayoutRail(camPanel);
-    const g = GEO[id];
+    const g = geoFor(id);
     el.cvLive.width = Math.round(g.W * CLIP_SCALE);
     el.cvLive.height = Math.round(g.H * CLIP_SCALE);
     sizePrint();
@@ -1765,9 +1961,8 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     return list[j].b;
   }
   function clipBackground(r) {
-    const key = `${r.layout}|${state.style}`;
+    const g = geoFor(r.layout), key = `${g.key}|${state.style}`;
     if (!r.bgClip || r.bgKey !== key) {
-      const g = GEO[r.layout];
       const c = r.bgClip || document.createElement('canvas');
       c.width = Math.round(g.W * CLIP_SCALE);
       c.height = Math.round(g.H * CLIP_SCALE);
@@ -1782,7 +1977,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
     if (!r || !r.frames) return;
     const imgs = await Promise.all(r.frames.map((list) => (list.length ? decode(pickFrame(k, list, r.loopLen)) : Promise.resolve(null))));
     if (gen === live.gen && state.result === r) {
-      const g = GEO[r.layout];
+      const g = geoFor(r.layout);
       liveCtx.drawImage(clipBackground(r), 0, 0);
       drawSlots(liveCtx, g, CLIP_SCALE, imgs.map((im, i) => im || r.shots[i]), curFilter(), k * 7);
     }
@@ -2162,6 +2357,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
   el.cam.classList.toggle('bw', !HAS_FX && !!curFilter().mono);
   const camPanel = buildPanel(el.panelCam, 'cam');
   const resPanel = buildPanel(el.panelRes, 'res');
+  applyGlow();
   buildSeg(el.segView, [['photo', 'รูป'], ['clip', 'คลิป']], 'photo', setView);
   buildThumbs();
   setStageMode('print');
@@ -2177,7 +2373,7 @@ body.inside .wrap :focus-visible{outline-color:var(--shoot)}
   setTimeout(checkUpdate, 1500);
 
   // ไว้ใช้ทดสอบ: ดูสถานะได้จาก DevTools
-  window.__photobooth = { CONFIG, state, GEO, LAYOUTS, STYLES, FILTERS, HAS_FX, APP_VERSION };
+  window.__photobooth = { CONFIG, state, GEO, LAYOUTS, STYLES, FILTERS, BORDERS, GLOWS, HAS_FX, APP_VERSION, geoFor };
 })();
 </script>
 </body>
