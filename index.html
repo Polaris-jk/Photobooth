@@ -391,7 +391,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
 
   /* เลขเวอร์ชัน: ทุกครั้งที่อัปเดต ให้เปลี่ยนตรงนี้และใน version.json ให้ตรงกัน
      ICON_VERSION: เพิ่มเมื่อเปลี่ยนไอคอน คนที่เพิ่มแอพไว้บนหน้าจอโฮมจะได้รับคำแนะนำให้เพิ่มใหม่ */
-  const APP_VERSION = '2.6.2';
+  const APP_VERSION = '2.7.0';
   const ICON_VERSION = 3;
 
   /* ---------- รูปแบบเฟรม ---------- */
@@ -760,7 +760,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
       if (patterned) {
         // ป้ายกระดาษตรงกลาง ให้อ่านออกบนลาย
         ctx.font = `${tSize}px ${tFont}`;
-        const lw = Math.min(w * 0.92, Math.max(ctx.measureText(title).width + 110 * base * k, 440 * base * k));
+        const lw = Math.min(w * 0.92, Math.max(ctx.measureText(title || '').width + 110 * base * k, (title ? 440 : 300) * base * k));
         const lh = h * 0.68, lx = cx - lw / 2, ly = y + (h - lh) / 2;
         ctx.save();
         ctx.shadowColor = 'rgba(0,0,0,0.18)';
@@ -775,9 +775,9 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
       ctx.fillStyle = ink;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      fitText(ctx, title, cx, y + h * 0.41, w * 0.8, tSize, '', tFont, tSpace);
+      if (title) fitText(ctx, title, cx, y + h * 0.41, w * 0.8, tSize, '', tFont, tSpace);
       ctx.globalAlpha = 0.72;
-      fitText(ctx, date, cx, y + h * 0.72, w * 0.8, dSize, hand ? '' : '500 ', dFont, dSpace);
+      fitText(ctx, date, cx, y + h * (title ? 0.72 : 0.5), w * 0.8, dSize, hand ? '' : '500 ', dFont, dSpace);   // ถ่ายคู่ไม่มีชื่อแอพ เหลือแค่วันที่
       ctx.globalAlpha = 1;
     });
   }
@@ -2034,6 +2034,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
   const printBg = document.createElement('canvas');
   const printTmp = document.createElement('canvas');
   let printBgKey = '';
+  const printTitle = (pair) => (pair ? '' : CONFIG.title);   // โหมดถ่ายคู่ไม่ใส่ชื่อแอพ
   function drawPrintPreview(v, now) {
     const g = geo(), cv = el.printCv, rect = cv.getBoundingClientRect();
     if (!rect.width) return;
@@ -2041,10 +2042,11 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
     const w = Math.round(rect.width * dpr), h = Math.round((w * g.H) / g.W);
     if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
     const k = w / g.W, ctx = cv.getContext('2d'), today = fmtDate(new Date());
-    const key = [g.key, state.style, w, today].join('|');
+    const pt = printTitle(pairActive(g));
+    const key = [g.key, state.style, w, today, pt].join('|');
     if (key !== printBgKey) {
       printBg.width = w; printBg.height = h;
-      paintPrint(printBg.getContext('2d'), g, k, curStyle(), CONFIG.title, today);
+      paintPrint(printBg.getContext('2d'), g, k, curStyle(), pt, today);
       printBgKey = key;
     }
     ctx.drawImage(printBg, 0, 0);
@@ -2260,7 +2262,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
       setShooting(false);
       track('shoot-' + g.id);
       if (s.pair) track('shoot-pair');
-      showResult({ source: 'camera', layout: g.id, shots: s.shots, frames: s.frames.map((l) => l.filter((fr) => fr.b)), date: s.date });
+      showResult({ source: 'camera', layout: g.id, shots: s.shots, frames: s.frames.map((l) => l.filter((fr) => fr.b)), date: s.date, pair: s.pair });
     } catch (e) {
       flashOff();
       state.session = null;
@@ -2309,7 +2311,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
       }
       await fontsReady;
       track('album-' + g.id);
-      showResult({ source: 'album', layout: g.id, shots, frames: null, date: new Date() });
+      showResult({ source: 'album', layout: g.id, shots, frames: null, date: new Date(), pair: pairActive(g) });
     } finally {
       el.btnAlbum.disabled = false;
       el.btnShoot.disabled = false;
@@ -2323,7 +2325,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
   function showResult(spec) {
     const g = geoFor(spec.layout);
     const r = {
-      source: spec.source, layout: spec.layout, shots: spec.shots, frames: spec.frames, date: spec.date,
+      source: spec.source, layout: spec.layout, shots: spec.shots, frames: spec.frames, date: spec.date, pair: !!spec.pair,
       name: 'tu-photobooth-' + stamp(spec.date),
       loopLen: spec.frames ? Math.round((CONFIG.liveSeconds * 1000) / FRAME_MS) + 1 : 1,   // จำนวนเฟรมต่อรอบ (2 วิ = 31 เฟรม)
       hasClip: !!spec.frames && !!recorderTypes(),
@@ -2379,7 +2381,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
     cvStill.width = g.W;
     cvStill.height = g.H;
     const ctx = cvStill.getContext('2d');
-    paintPrint(ctx, g, 1, curStyle(), CONFIG.title, fmtDate(r.date));
+    paintPrint(ctx, g, 1, curStyle(), printTitle(r.pair), fmtDate(r.date));
     drawSlots(ctx, g, 1, r.shots, curFilter(), 11);
     const blob = await canvasBlob(cvStill, 'image/jpeg', CONFIG.photoQuality);
     if (state.result !== r || token !== r.stillToken || !blob) return;
@@ -2433,7 +2435,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
       const c = r.bgClip || document.createElement('canvas');
       c.width = Math.round(g.W * CLIP_SCALE);
       c.height = Math.round(g.H * CLIP_SCALE);
-      paintPrint(c.getContext('2d'), g, CLIP_SCALE, curStyle(), CONFIG.title, fmtDate(r.date));
+      paintPrint(c.getContext('2d'), g, CLIP_SCALE, curStyle(), printTitle(r.pair), fmtDate(r.date));
       r.bgClip = c;
       r.bgKey = key;
     }
