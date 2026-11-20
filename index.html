@@ -270,6 +270,10 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
 .stage.pairing #printCv{cursor:pointer}
 .pt-unlock{display:block;margin:-2px auto 0;padding:4px 10px;font-size:12px;color:var(--muted);text-decoration:underline;text-underline-offset:2px}
 .panel-dark .pt-unlock{color:rgba(255,255,255,.75)}
+.pt-code{display:none;gap:6px;justify-content:center;margin:2px auto 0}
+.pt-code.on{display:flex}
+.pt-code input{width:190px;height:36px;padding:0 10px;border:1.5px solid var(--mist);border-radius:10px;font:600 16px/1 inherit;letter-spacing:.06em;text-transform:uppercase;background:#fff;color:var(--ink)}
+.pt-code button{height:36px;padding:0 14px;border-radius:10px;background:var(--ink);color:#fff;font-size:14px;font-weight:600}
 @media (prefers-reduced-motion:reduce){
   .screen.on,.sample,.result.deliver .print,.count.pop,.flash.go,.rec i,.item.pop,.thumbs li.done,.lightbox{animation:none}
   .print{transform:none}
@@ -387,7 +391,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
 
   /* เลขเวอร์ชัน: ทุกครั้งที่อัปเดต ให้เปลี่ยนตรงนี้และใน version.json ให้ตรงกัน
      ICON_VERSION: เพิ่มเมื่อเปลี่ยนไอคอน คนที่เพิ่มแอพไว้บนหน้าจอโฮมจะได้รับคำแนะนำให้เพิ่มใหม่ */
-  const APP_VERSION = '2.6.0';
+  const APP_VERSION = '2.6.1';
   const ICON_VERSION = 3;
 
   /* ---------- รูปแบบเฟรม ---------- */
@@ -1270,7 +1274,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
       '<div class="pane" data-pane="filter"><div class="rail" data-rail="filter"></div></div>',
       '<div class="pane" data-pane="layout">', cam ? '<div class="seg seg-count" role="group" aria-label="จำนวนรูป"></div>' : '', '<div class="rail" data-rail="layout"></div></div>',
       `<div class="pane" data-pane="style"><div class="seg seg-border${cam ? '' : ' seg-dark'}" role="group" aria-label="ความหนาขอบ"></div><div class="rail" data-rail="style"></div><p class="pick-name"></p></div>`,
-      cam ? '<div class="pane" data-pane="pair"><div class="seg seg-pair" role="group" aria-label="ถ่ายคู่"></div><div class="rail" data-rail="pair"></div><p class="pick-name pair-hint"></p><button type="button" class="pt-unlock">ปลดล็อกชุด</button></div>' : '',
+      cam ? '<div class="pane" data-pane="pair"><div class="seg seg-pair" role="group" aria-label="ถ่ายคู่"></div><div class="rail" data-rail="pair"></div><p class="pick-name pair-hint"></p><button type="button" class="pt-unlock">ปลดล็อกชุด</button><form class="pt-code"><input type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ใส่รหัส" aria-label="รหัส"><button type="submit">ปลดล็อก</button></form></div>' : '',
       cam ? '<div class="pane" data-pane="glow"><div class="rail" data-rail="glow"></div><label class="glow-amt"><span>ความเข้ม</span><input type="range" min="10" max="100" step="5"><output></output></label></div>' : '',
     ].join('');
     const P = {
@@ -1283,7 +1287,12 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
       P.rails.pair = root.querySelector('[data-rail="pair"]');
       P.pairSeg = root.querySelector('.seg-pair');
       P.pairHint = root.querySelector('.pair-hint');
-      root.querySelector('.pt-unlock').addEventListener('click', unlockSets);
+      const codeForm = root.querySelector('.pt-code'), codeIn = codeForm.querySelector('input');
+      root.querySelector('.pt-unlock').addEventListener('click', () => { codeForm.classList.toggle('on'); if (codeForm.classList.contains('on')) codeIn.focus(); });
+      codeForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (await unlockSets(codeIn.value)) { codeIn.value = ''; codeForm.classList.remove('on'); codeIn.blur(); }
+      });
       buildSeg(P.pairSeg, [['off', 'ปิด']].concat(PAIR_SETS.map((n, k) => [String(k), n])), pairSegVal(), (v) => (v === 'off' ? setPairOn(false) : setPairSet(+v)));
       P.pairSeg.insertAdjacentHTML('afterbegin', '<span class="seg-lbl" aria-hidden="true">ถ่ายคู่</span>');
     }
@@ -1679,20 +1688,18 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
     pairsChanged();
   }
   // ชุดที่เข้ารหัสไว้ (img/pairs.bin, AES-GCM + PBKDF2) ใส่รหัสแล้วลงแฟน1/แฟน2 ในเครื่องนี้
-  async function unlockSets() {
-    if (state.session) return;
-    const raw = window.prompt('ใส่รหัส');
-    if (raw == null) return;
+  async function unlockSets(raw) {
+    if (state.session || raw == null) return false;
     const code = raw.toUpperCase().replace(/[^A-Z0-9]/g, '');
-    if (!code) return;
-    if (!(window.crypto && crypto.subtle)) { toast('เครื่องนี้ปลดล็อกไม่ได้'); return; }
+    if (!code) return false;
+    if (!(window.crypto && crypto.subtle)) { toast('เครื่องนี้ปลดล็อกไม่ได้'); return false; }
     toast('กำลังปลดล็อก…');
     let buf;
     try {
       const r = await fetch('img/pairs.bin', { cache: 'no-store' });
       if (!r.ok) throw new Error('http');
       buf = new Uint8Array(await r.arrayBuffer());
-    } catch (e) { toast('โหลดไม่ได้ ลองใหม่อีกที'); return; }
+    } catch (e) { toast('โหลดไม่ได้ ลองใหม่อีกที'); return false; }
     const dv = new DataView(buf.buffer);
     const it = dv.getUint32(4), salt = buf.slice(8, 24), iv = buf.slice(24, 36);
     let plain;
@@ -1700,7 +1707,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
       const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(code), 'PBKDF2', false, ['deriveKey']);
       const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: it, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
       plain = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, buf.slice(36)));
-    } catch (e) { toast('รหัสไม่ถูก'); return; }
+    } catch (e) { toast('รหัสไม่ถูก'); return false; }
     const hl = new DataView(plain.buffer).getUint32(0);
     const head = JSON.parse(new TextDecoder().decode(plain.slice(4, 4 + hl)));
     let off = 4 + hl;
@@ -1716,6 +1723,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
     store.set('pairOn', true);
     pairsChanged();
     toast('ปลดล็อกแล้ว');
+    return true;
   }
   function renderPair(P) {
     const g = geo(), key = [pairVer, g.id, state.border, state.pairOn, state.pairSet].join('|');
