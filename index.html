@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Tu.Photobooth · เวอร์ชัน 2.3 -->
+<!-- Tu.Photobooth · เวอร์ชัน 2.4 -->
 <html lang="th">
 <head>
 <meta charset="utf-8">
@@ -250,6 +250,24 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
 .banner-x{width:30px;height:30px;font-size:20px;line-height:1;color:rgba(255,255,255,.7);flex:0 0 auto}
 @media (max-height:680px){.thumbs{height:38px}.thumbs.many{height:28px}}
 @media (max-width:360px){.seg button,.tabs button{padding:0 10px}}
+#panelCam .tabs button{padding:0 10px}
+@media (max-width:380px){#panelCam .tabs button{padding:0 7px;font-size:14px}}
+/* ถ่ายคู่ */
+.seg-pair{display:flex;width:max-content;margin:0 auto 6px}
+.pt-add i{display:grid;place-items:center;width:46px;height:46px;border-radius:12px;background:var(--mist);font-size:28px;font-style:normal;font-weight:400;line-height:1;color:var(--ink)}
+.pt-item{position:relative}
+.pt-main{position:relative;display:block;border-radius:7px}
+.pt-main canvas{display:block;border-radius:7px;background:#e4e8f3}
+.pt-item.empty .pt-main canvas{background:transparent;outline:1.5px dashed rgba(93,104,144,.55);outline-offset:-1.5px}
+.pt-item.empty .pt-main::after{content:'+';position:absolute;inset:0;display:grid;place-items:center;font-size:22px;color:var(--muted)}
+.pt-n{position:absolute;left:5px;top:4px;font-size:11px;font-weight:600;line-height:1;color:var(--muted)}
+.panel-dark .pt-n{color:rgba(255,255,255,.8)}
+.pt-x{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;font-size:15px;line-height:22px;text-align:center;box-shadow:0 0 0 2px var(--glow,#fff)}
+.panel-dark .pt-add i{background:rgba(255,255,255,.16);color:#fff}
+.panel-dark .pt-main canvas{background:rgba(255,255,255,.22)}
+.panel-dark .pt-item.empty .pt-main canvas{outline-color:rgba(255,255,255,.6)}
+.panel-dark .pt-item.empty .pt-main::after{color:#fff}
+.stage.pairing #printCv{cursor:pointer}
 @media (prefers-reduced-motion:reduce){
   .screen.on,.sample,.result.deliver .print,.count.pop,.flash.go,.rec i,.item.pop,.thumbs li.done,.lightbox{animation:none}
   .print{transform:none}
@@ -304,6 +322,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
     </div>
     <p class="note" id="camHint"></p>
     <input type="file" id="fileInput" accept="image/*" multiple hidden>
+    <input type="file" id="pairInput" accept="image/*" multiple hidden>
   </div>
 </section>
 
@@ -366,7 +385,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
 
   /* เลขเวอร์ชัน: ทุกครั้งที่อัปเดต ให้เปลี่ยนตรงนี้และใน version.json ให้ตรงกัน
      ICON_VERSION: เพิ่มเมื่อเปลี่ยนไอคอน คนที่เพิ่มแอพไว้บนหน้าจอโฮมจะได้รับคำแนะนำให้เพิ่มใหม่ */
-  const APP_VERSION = '2.3.0';
+  const APP_VERSION = '2.4.0';
   const ICON_VERSION = 3;
 
   /* ---------- รูปแบบเฟรม ---------- */
@@ -858,9 +877,11 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
     'uniform float uCurve,uVig,uGrain;',
     'uniform vec2 uNoiseScale,uNoiseOff;',
     'uniform vec4 uLeak;uniform vec2 uLeakPos;',
+    'uniform sampler2D uOver;uniform vec4 uOverR;uniform float uOverOn,uOverFlip;',
     'void main(){',
     '  vec2 uv=v; if(uMirror>.5) uv.x=1.-uv.x;',
     '  vec3 c=texture2D(uTex,uCrop.xy+uv*uCrop.zw).rgb;',
+    '  if(uOverOn>.5){vec2 q=(v-uOverR.xy)/uOverR.zw;if(q.x>=0.&&q.x<=1.&&q.y>=0.&&q.y<=1.){if(uOverFlip>.5)q.x=1.-q.x;vec4 o=texture2D(uOver,q);c=mix(c,o.rgb,o.a);}}',
     '  c=clamp(vec3(dot(uM0,c),dot(uM1,c),dot(uM2,c))+uOff,0.,1.);',
     '  if(uCurve>.5){vec3 q=(c*255.+.5)/256.;c=vec3(texture2D(uLut,vec2(q.r,.5)).r,texture2D(uLut,vec2(q.g,.5)).g,texture2D(uLut,vec2(q.b,.5)).b);}',
     '  if(uLeak.a>0.){float w=uLeak.a*(1.-smoothstep(0.,.95,distance(v,uLeakPos)));c=1.-(1.-c)*(1.-uLeak.rgb*w);}',
@@ -901,7 +922,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
       gl.enableVertexAttribArray(aLoc);
       gl.vertexAttribPointer(aLoc, 2, gl.FLOAT, false, 0, 0);
       const U = {};
-      ['uTex', 'uLut', 'uNoise', 'uCrop', 'uMirror', 'uM0', 'uM1', 'uM2', 'uOff', 'uCurve', 'uVig', 'uGrain', 'uNoiseScale', 'uNoiseOff', 'uLeak', 'uLeakPos'].forEach((n) => { U[n] = gl.getUniformLocation(prog, n); });
+      ['uTex', 'uLut', 'uNoise', 'uCrop', 'uMirror', 'uM0', 'uM1', 'uM2', 'uOff', 'uCurve', 'uVig', 'uGrain', 'uNoiseScale', 'uNoiseOff', 'uLeak', 'uLeakPos', 'uOver', 'uOverR', 'uOverOn', 'uOverFlip'].forEach((n) => { U[n] = gl.getUniformLocation(prog, n); });
       const makeTex = (unit, filt, wrap) => {
         const t = gl.createTexture();
         gl.activeTexture(gl.TEXTURE0 + unit);
@@ -922,13 +943,35 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
       gl.uniform1i(U.uTex, 0);
       gl.uniform1i(U.uLut, 1);
       gl.uniform1i(U.uNoise, 2);
+      makeTex(3, gl.LINEAR, gl.CLAMP_TO_EDGE);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(4));
+      gl.uniform1i(U.uOver, 3);
+      gl.uniform1f(U.uOverOn, 0);
+      const overTex = new WeakMap();   // รูปไดคัทอัปโหลดครั้งเดียวต่อรูป
       let lutFor = '';
       const draw = (source, f, o) => {
         const w = o.w, h = o.h, m = f.matrix, lk = f.leak;
         gl.viewport(0, 0, w, h);
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, srcTex);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, source);
+        if (!o.keep) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, source);
+        const ov = o.over;
+        if (ov && ov.img) {
+          let t = overTex.get(ov.img);
+          if (!t) {
+            t = makeTex(3, gl.LINEAR, gl.CLAMP_TO_EDGE);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, ov.img);
+            overTex.set(ov.img, t);
+          } else {
+            gl.activeTexture(gl.TEXTURE3);
+            gl.bindTexture(gl.TEXTURE_2D, t);
+          }
+          gl.uniform4f(U.uOverR, ov.rect[0], ov.rect[1], ov.rect[2], ov.rect[3]);
+          gl.uniform1f(U.uOverFlip, ov.flip ? 1 : 0);
+          gl.uniform1f(U.uOverOn, 1);
+        } else {
+          gl.uniform1f(U.uOverOn, 0);
+        }
         const cr = o.crop || [0, 0, 1, 1];
         gl.uniform4f(U.uCrop, cr[0], cr[1], cr[2], cr[3]);
         gl.uniform1f(U.uMirror, o.mirror ? 1 : 0);
@@ -968,7 +1011,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
     status: $('status'), btnTimer: $('btnTimer'), timerLabel: $('timerLabel'),
     stage: $('stage'), cam: $('cam'), stageCv: $('stageCv'), printCv: $('printCv'), rec: $('recBadge'), count: $('count'), flash: $('flash'),
     thumbs: $('thumbs'), panelCam: $('panelCam'), btnFlash: $('btnFlash'), flashLabel: $('flashLabel'), litFlash: $('litFlash'), btnAlbum: $('btnAlbum'), btnShoot: $('btnShoot'), btnFlip: $('btnFlip'),
-    camHint: $('camHint'), fileInput: $('fileInput'),
+    camHint: $('camHint'), fileInput: $('fileInput'), pairInput: $('pairInput'),
     result: $('result'), segView: $('segView'), traySlot: $('traySlot'), print: $('print'), imgPhoto: $('imgPhoto'), cvLive: $('cvLive'),
     btnSavePhoto: $('btnSavePhoto'), btnSaveClip: $('btnSaveClip'), clipProg: $('clipProg'), clipLabel: $('clipLabel'),
     saveHint: $('saveHint'), panelRes: $('panelRes'), btnAgain: $('btnAgain'),
@@ -1019,6 +1062,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
     glow: pickValid(store.get('glow', 'none'), (v) => v === 'custom' || GLOWS.some((x) => x.id === v), 'none'),
     glowCustom: pickValid(store.get('glowCustom', '#ff7eb3'), (v) => /^#[0-9a-f]{6}$/i.test(v), '#ff7eb3'),
     glowAmt: pickValid(store.get('glowAmt', 100), (v) => typeof v === 'number' && v >= 10 && v <= 100, 100),
+    pairOn: store.get('pairOn', true) !== false,
     flash: store.get('flash', false) === true,
     session: null,
     result: null,
@@ -1218,10 +1262,12 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
       '<button type="button" role="tab" data-tab="layout">รูปแบบ</button>',
       '<button type="button" role="tab" data-tab="style">กรอบ</button>',
       cam ? '<button type="button" role="tab" data-tab="glow">เรืองแสง</button>' : '',
+      cam ? '<button type="button" role="tab" data-tab="pair">ถ่ายคู่</button>' : '',
       '<i class="tab-ink" aria-hidden="true"></i></div>',
       '<div class="pane" data-pane="filter"><div class="rail" data-rail="filter"></div></div>',
       '<div class="pane" data-pane="layout">', cam ? '<div class="seg seg-count" role="group" aria-label="จำนวนรูป"></div>' : '', '<div class="rail" data-rail="layout"></div></div>',
       `<div class="pane" data-pane="style"><div class="seg seg-border${cam ? '' : ' seg-dark'}" role="group" aria-label="ความหนาขอบ"></div><div class="rail" data-rail="style"></div><p class="pick-name"></p></div>`,
+      cam ? '<div class="pane" data-pane="pair"><div class="seg seg-pair" role="group" aria-label="ถ่ายคู่"></div><div class="rail" data-rail="pair"></div><p class="pick-name pair-hint"></p></div>' : '',
       cam ? '<div class="pane" data-pane="glow"><div class="rail" data-rail="glow"></div><label class="glow-amt"><span>ความเข้ม</span><input type="range" min="10" max="100" step="5"><output></output></label></div>' : '',
     ].join('');
     const P = {
@@ -1229,7 +1275,14 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
       rails: { filter: root.querySelector('[data-rail="filter"]'), layout: root.querySelector('[data-rail="layout"]'), style: root.querySelector('[data-rail="style"]') },
       count: root.querySelector('.seg-count'), border: root.querySelector('.seg-border'), name: root.querySelector('.pick-name'), ink: root.querySelector('.tab-ink'),
     };
-    if (cam) P.rails.glow = root.querySelector('[data-rail="glow"]');
+    if (cam) {
+      P.rails.glow = root.querySelector('[data-rail="glow"]');
+      P.rails.pair = root.querySelector('[data-rail="pair"]');
+      P.pairSeg = root.querySelector('.seg-pair');
+      P.pairHint = root.querySelector('.pair-hint');
+      buildSeg(P.pairSeg, [['off', 'ปิด'], ['on', 'เปิด']], state.pairOn ? 'on' : 'off', (v) => setPairOn(v === 'on'));
+      P.pairSeg.insertAdjacentHTML('afterbegin', '<span class="seg-lbl" aria-hidden="true">ถ่ายคู่</span>');
+    }
     root.querySelectorAll('[role="tab"]').forEach((b) => b.addEventListener('click', () => setTab(P, b.dataset.tab)));
     AVAILABLE_FILTERS.forEach((f) => {
       const b = document.createElement('button');
@@ -1300,6 +1353,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
     if (P.count) syncSeg(P.count, geo().count);
     syncSeg(P.border, state.border);
     if (P.rails.glow) syncGlow(P);
+    if (P.rails.pair) renderPair(P);
     P.name.textContent = curStyle().name;
   }
   function centerSelected(rail) {
@@ -1338,6 +1392,225 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
       drawFiltered(x, snapCv, FILTER_BY[b.dataset.id], 120, 120, [[0, 0, 120, 120]], 3);
     });
     P.fxDone = true;
+  }
+
+  /* ---------- ถ่ายคู่: รูปคนที่ไดคัทแล้ว (พื้นใส) ช่องละ 1 รูป เรียงตามลำดับ ----------
+     รูปเก็บใน IndexedDB ของเครื่องนี้เท่านั้น ไม่อัปโหลด ไม่อยู่ใน repo */
+  const MAX_PAIR = 9;
+  const pairs = new Array(MAX_PAIR).fill(null);   // { img, flip, blob }
+  let pairVer = 0, pairStart = 0;
+  const pairDB = (() => {
+    let dbp = null;
+    const open = () => dbp || (dbp = new Promise((res, rej) => {
+      if (!window.indexedDB) { rej(new Error('no indexedDB')); return; }
+      const r = indexedDB.open('tuphotobooth', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('pairs');
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    }));
+    const run = (mode, fn) => open().then((db) => new Promise((res, rej) => {
+      const t = db.transaction('pairs', mode), req = fn(t.objectStore('pairs'));
+      t.oncomplete = () => res(req.result);
+      t.onerror = () => rej(t.error);
+      t.onabort = () => rej(t.error);
+    }));
+    return {
+      get: (k) => run('readonly', (st) => st.get(k)),
+      put: (k, v) => run('readwrite', (st) => st.put(v, k)),
+      del: (k) => run('readwrite', (st) => st.delete(k)),
+    };
+  })();
+  function blobImage(blob) {
+    return new Promise((res) => {
+      const img = new Image();
+      img.onload = () => res(img);
+      img.onerror = () => res(null);
+      img.src = URL.createObjectURL(blob);
+    });
+  }
+  const pairAt = (i) => (state.pairOn && pairs[i] ? pairs[i] : null);
+  function pairActive(g) {
+    if (!state.pairOn) return false;
+    for (let i = 0; i < g.count; i++) if (pairs[i]) return true;
+    return false;
+  }
+  // วางชิดล่าง ชิดขวา (หรือซ้ายถ้าสลับฝั่ง) สูงไม่เกิน 92% ของช่อง
+  function pairBox(p, W, H) {
+    const iw = p.img.naturalWidth, ih = p.img.naturalHeight;
+    let sc = Math.min(H * 0.92, W * 0.8) / ih;
+    if (iw * sc > W * 0.98) sc = (W * 0.98) / iw;
+    const w = iw * sc, h = ih * sc;
+    return { x: p.flip ? 0 : W - w, y: H - h, w, h };
+  }
+  const pairRect = (p, W, H) => { const b = pairBox(p, W, H); return [b.x / W, b.y / H, b.w / W, b.h / H]; };
+  function drawPairImg(ctx, p, x, y, W, H) {
+    const b = pairBox(p, W, H);
+    ctx.save();
+    ctx.imageSmoothingEnabled = true;
+    if ('imageSmoothingQuality' in ctx) ctx.imageSmoothingQuality = 'high';
+    if (p.flip) { ctx.translate(x + b.x + b.w, y + b.y); ctx.scale(-1, 1); ctx.drawImage(p.img, 0, 0, b.w, b.h); }
+    else ctx.drawImage(p.img, x + b.x, y + b.y, b.w, b.h);
+    ctx.restore();
+  }
+  // ย่อรูปใหญ่ ตัดขอบใสออก และดูว่ามีพื้นหลังโปร่งใสจริงไหม
+  function prepPair(img) {
+    const iw = img.naturalWidth, ih = img.naturalHeight;
+    if (!iw || !ih) return null;
+    const sc = Math.min(1, 1600 / Math.max(iw, ih));
+    const w = Math.max(1, Math.round(iw * sc)), h = Math.max(1, Math.round(ih * sc));
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const x = c.getContext('2d');
+    x.drawImage(img, 0, 0, w, h);
+    let d;
+    try { d = x.getImageData(0, 0, w, h).data; } catch (e) { return { canvas: c, alpha: true }; }
+    let x0 = w, y0 = h, x1 = -1, y1 = -1, clear = 0;
+    for (let yy = 0; yy < h; yy++) {
+      const row = yy * w * 4;
+      for (let xx = 0; xx < w; xx++) {
+        if (d[row + xx * 4 + 3] > 12) {
+          if (xx < x0) x0 = xx;
+          if (xx > x1) x1 = xx;
+          if (yy < y0) y0 = yy;
+          y1 = yy;
+        } else clear++;
+      }
+    }
+    if (x1 < 0) return null;
+    const alpha = clear > w * h * 0.02;
+    if (x0 === 0 && y0 === 0 && x1 === w - 1 && y1 === h - 1) return { canvas: c, alpha };
+    const t = document.createElement('canvas');
+    t.width = x1 - x0 + 1; t.height = y1 - y0 + 1;
+    t.getContext('2d').drawImage(c, x0, y0, t.width, t.height, 0, 0, t.width, t.height);
+    c.width = 0; c.height = 0;
+    return { canvas: t, alpha };
+  }
+  function savePair(i) {
+    const p = pairs[i];
+    (p ? pairDB.put(i, { blob: p.blob, flip: p.flip }) : pairDB.del(i)).catch(() => { /* เก็บไม่ได้ก็ใช้ได้แค่รอบนี้ */ });
+  }
+  function setPair(i, p) {
+    const old = pairs[i];
+    if (old && old.img && old.img.src.indexOf('blob:') === 0) URL.revokeObjectURL(old.img.src);
+    pairs[i] = p;
+    pairVer++;
+    savePair(i);
+  }
+  function pairsChanged() {
+    pairVer++;
+    panels.forEach((P) => { if (P.rails.pair) renderPair(P); });
+    el.stage.classList.toggle('pairing', pairActive(geo()));
+  }
+  function flipPair(i) {
+    if (!pairs[i] || state.session) return;
+    pairs[i].flip = !pairs[i].flip;
+    savePair(i);
+    pairsChanged();
+  }
+  function removePair(i) {
+    if (state.session) return;
+    setPair(i, null);
+    pairsChanged();
+  }
+  function setPairOn(on) {
+    state.pairOn = on;
+    store.set('pairOn', on);
+    pairsChanged();
+  }
+  function openPairPicker(i) {
+    if (state.session) return;
+    pairStart = i;
+    el.pairInput.click();
+  }
+  async function addPairs(files, start) {
+    if (state.session) return;
+    let i = start, added = 0, flat = false;
+    for (const file of files) {
+      if (i >= MAX_PAIR) break;
+      const img = await loadImageFile(file);
+      const prep = img && prepPair(img);
+      if (!prep) continue;
+      const blob = await canvasBlob(prep.canvas, 'image/png');
+      const pimg = blob && (await blobImage(blob));
+      if (!pimg) continue;
+      if (!prep.alpha) flat = true;
+      setPair(i, { img: pimg, flip: false, blob });
+      i++; added++;
+    }
+    if (!added) { toast('เปิดรูปไม่ได้ ลองรูปอื่นนะ'); return; }
+    state.pairOn = true;
+    store.set('pairOn', true);
+    pairsChanged();
+    track('pair-add');
+    if (flat) toast('บางรูปยังมีพื้นหลังอยู่ ไดคัทก่อนจะเนียนกว่า');
+  }
+  async function loadPairs() {
+    for (let i = 0; i < MAX_PAIR; i++) {
+      try {
+        const v = await pairDB.get(i);
+        if (v && v.blob) {
+          const img = await blobImage(v.blob);
+          if (img) pairs[i] = { img, flip: !!v.flip, blob: v.blob };
+        }
+      } catch (e) { break; }
+    }
+    pairsChanged();
+  }
+  function renderPair(P) {
+    const g = geo(), key = [pairVer, g.id, state.border, state.pairOn].join('|');
+    syncSeg(P.pairSeg, state.pairOn ? 'on' : 'off');
+    el.stage.classList.toggle('pairing', pairActive(g));
+    if (P.pairKey === key) return;
+    P.pairKey = key;
+    const rail = P.rails.pair;
+    rail.textContent = '';
+    const add = document.createElement('button');
+    add.type = 'button';
+    add.className = 'item pt-add';
+    add.setAttribute('aria-label', 'เพิ่มรูป');
+    add.innerHTML = '<i aria-hidden="true">+</i>';
+    add.addEventListener('click', () => {
+      popItem(add);
+      let first = 0;
+      for (let i = 0; i < g.count; i++) { if (!pairs[i]) { first = i; break; } }
+      openPairPicker(first);
+    });
+    rail.appendChild(add);
+    let any = false;
+    for (let i = 0; i < g.count; i++) {
+      const sl = g.bySrc[i][0], pr = pairs[i];
+      if (pr) any = true;
+      const card = document.createElement('div');
+      card.className = 'item pt-item' + (pr ? '' : ' empty');
+      const main = document.createElement('button');
+      main.type = 'button';
+      main.className = 'pt-main';
+      main.setAttribute('aria-label', pr ? `ช่อง ${i + 1} แตะเพื่อสลับซ้ายขวา` : `ใส่รูปช่อง ${i + 1}`);
+      const hh = 46, ww = Math.max(28, Math.min(88, Math.round((hh * sl.w) / sl.h)));
+      const cv = document.createElement('canvas');
+      cv.width = ww * 2; cv.height = hh * 2;
+      cv.style.width = ww + 'px'; cv.style.height = hh + 'px';
+      if (pr) drawPairImg(cv.getContext('2d'), pr, 0, 0, cv.width, cv.height);
+      main.appendChild(cv);
+      main.insertAdjacentHTML('beforeend', `<b class="pt-n" aria-hidden="true">${i + 1}</b>`);
+      main.addEventListener('click', () => {
+        if (state.session) return;
+        popItem(card);
+        if (pairs[i]) flipPair(i); else openPairPicker(i);
+      });
+      card.appendChild(main);
+      if (pr) {
+        const x = document.createElement('button');
+        x.type = 'button';
+        x.className = 'pt-x';
+        x.textContent = '×';
+        x.setAttribute('aria-label', `ลบรูปช่อง ${i + 1}`);
+        x.addEventListener('click', (e) => { e.stopPropagation(); removePair(i); });
+        card.appendChild(x);
+      }
+      rail.appendChild(card);
+    }
+    P.pairHint.textContent = any ? 'แตะรูปเพื่อสลับซ้ายขวา' : 'ใส่รูปคนที่ไดคัทแล้ว (พื้นใส) ช่องละรูป';
   }
 
   /* ---------- เรืองแสง ---------- */
@@ -1441,6 +1714,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
     applyStage();
     panels.forEach(fillLayoutRail);
     syncAll();
+    el.stage.classList.toggle('pairing', pairActive(geo()));
     const r = state.result;
     if (r) {
       r.bgKey = '';
@@ -1583,7 +1857,8 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
     const w = Math.max(2, Math.round(rect.width * dpr)), h = Math.max(2, Math.round(rect.height * dpr));
     if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
     try {
-      previewFX.draw(v, curFilter(), { w, h, crop: coverCrop(v.videoWidth, v.videoHeight, w / h), mirror: state.mirror, seed: Math.floor(now / 50) });
+      const ss = state.session, pr = pairAt(ss && ss.cur != null ? ss.cur : 0);
+      previewFX.draw(v, curFilter(), { w, h, crop: coverCrop(v.videoWidth, v.videoHeight, w / h), mirror: state.mirror, seed: Math.floor(now / 50), over: pr ? { img: pr.img, rect: pairRect(pr, w, h), flip: pr.flip } : null });
       if (!cv.classList.contains('live')) cv.classList.add('live');
     } catch (e) { /* ข้ามเฟรมนี้ */ }
   }
@@ -1611,12 +1886,27 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
     if (previewFX) {
       const sc = el.stageCv;
       if (sc.width !== sw || sc.height !== sh) { sc.width = sw; sc.height = sh; }
-      previewFX.draw(v, f, { w: sw, h: sh, crop: coverCrop(v.videoWidth, v.videoHeight, sw / sh), mirror: state.mirror, seed: Math.floor(now / 50) });
-      targets.forEach((t) => ctx.drawImage(sc, 0, 0, sw, sh, t[0], t[1], t[2], t[3]));
+      const crop = coverCrop(v.videoWidth, v.videoHeight, sw / sh), seed = Math.floor(now / 50);
+      if (pairActive(g)) {
+        // แต่ละช่องมีคนไดคัทของตัวเอง: วาดทีละช่อง ใช้ภาพกล้องเดิม (keep) ไม่อัปโหลดซ้ำ
+        for (let i = 0; i < g.count; i++) {
+          const pr = pairAt(i);
+          previewFX.draw(v, f, { w: sw, h: sh, crop, mirror: state.mirror, seed, keep: i > 0, over: pr ? { img: pr.img, rect: pairRect(pr, sw, sh), flip: pr.flip } : null });
+          g.bySrc[i].forEach((sl) => ctx.drawImage(sc, 0, 0, sw, sh, sl.x * k, sl.y * k, sl.w * k, sl.h * k));
+        }
+      } else {
+        previewFX.draw(v, f, { w: sw, h: sh, crop, mirror: state.mirror, seed });
+        targets.forEach((t) => ctx.drawImage(sc, 0, 0, sw, sh, t[0], t[1], t[2], t[3]));
+      }
     } else {
       if (printTmp.width !== sw || printTmp.height !== sh) { printTmp.width = sw; printTmp.height = sh; }
       drawCover(printTmp.getContext('2d'), v, v.videoWidth, v.videoHeight, sw, sh, state.mirror);
-      targets.forEach((t) => { ctx.drawImage(printTmp, t[0], t[1], t[2], t[3]); if (f.mono) monoRect(ctx, t[0], t[1], t[2], t[3]); });
+      g.slots.forEach((sl) => {
+        const t = [sl.x * k, sl.y * k, sl.w * k, sl.h * k], pr = pairAt(sl.src);
+        ctx.drawImage(printTmp, t[0], t[1], t[2], t[3]);
+        if (pr) drawPairImg(ctx, pr, t[0], t[1], t[2], t[3]);
+        if (f.mono) monoRect(ctx, t[0], t[1], t[2], t[3]);
+      });
     }
   }
   function startPreview() {
@@ -1706,6 +1996,8 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
   // t = เวลาของเฟรมนับจากต้นช่วงขยับ ใช้เล่นตามเวลาจริง เครื่องช้าก็ไม่ทำให้คลิปเร็วเกิน
   function grabLive(s, i, t) {
     drawCamera(grabCtx, grabCv.width, grabCv.height);
+    const pr = pairAt(i);
+    if (pr) drawPairImg(grabCtx, pr, 0, 0, grabCv.width, grabCv.height);
     const fr = { b: null, t };
     s.frames[i].push(fr);
     s.pending.push(canvasBlob(grabCv, 'image/jpeg', 0.85).then((b) => { fr.b = b; }));
@@ -1713,11 +2005,14 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
   function captureShot(g, i) {
     const sl = g.bySrc[i][0], c = document.createElement('canvas');
     c.width = sl.w; c.height = sl.h;
-    drawCamera(c.getContext('2d'), sl.w, sl.h);
+    const cx = c.getContext('2d'), pr = pairAt(i);
+    drawCamera(cx, sl.w, sl.h);
+    if (pr) drawPairImg(cx, pr, 0, 0, sl.w, sl.h);
     return c;
   }
   function shootOne(s, i, g) {
     const sl = g.bySrc[i][0];
+    s.cur = i;
     grabCv.width = Math.round(sl.w * CLIP_SCALE);
     grabCv.height = Math.round(sl.h * CLIP_SCALE);
     return new Promise((resolve, reject) => {
@@ -1764,7 +2059,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
     initAudio();
     keepAwake();
     const g = geo();
-    const s = { cancelled: false, layout: g.id, shots: [], frames: [], pending: [], date: new Date() };
+    const s = { cancelled: false, layout: g.id, shots: [], frames: [], pending: [], date: new Date(), pair: pairActive(g) };
     for (let i = 0; i < g.count; i++) s.frames.push([]);
     state.session = s;
     if (bannerKind === 'update') hideBanner();
@@ -1795,6 +2090,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
       state.session = null;
       setShooting(false);
       track('shoot-' + g.id);
+      if (s.pair) track('shoot-pair');
       showResult({ source: 'camera', layout: g.id, shots: s.shots, frames: s.frames.map((l) => l.filter((fr) => fr.b)), date: s.date });
     } catch (e) {
       flashOff();
@@ -1837,7 +2133,9 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
         if (!img || !img.naturalWidth) { toast('มีรูปที่เปิดไม่ได้ ลองรูปอื่นนะ'); return; }
         const sl = g.bySrc[shots.length][0], c = document.createElement('canvas');
         c.width = sl.w; c.height = sl.h;
-        drawCover(c.getContext('2d'), img, img.naturalWidth, img.naturalHeight, sl.w, sl.h, false);
+        const cx = c.getContext('2d'), pr = pairAt(shots.length);
+        drawCover(cx, img, img.naturalWidth, img.naturalHeight, sl.w, sl.h, false);
+        if (pr) drawPairImg(cx, pr, 0, 0, sl.w, sl.h);
         shots.push(c);
       }
       await fontsReady;
@@ -2302,6 +2600,20 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
     setTimerLabel();
   });
   el.btnAlbum.addEventListener('click', () => { if (!state.session) el.fileInput.click(); });
+  el.pairInput.addEventListener('change', () => {
+    const files = Array.from(el.pairInput.files || []).filter((f) => /^image\//.test(f.type) || /\.(png|webp|jpe?g|heic|heif|gif)$/i.test(f.name));
+    el.pairInput.value = '';
+    if (files.length) addPairs(files, pairStart);
+  });
+  // แตะคนไดคัทในจอตัวอย่าง = สลับซ้ายขวา
+  el.printCv.addEventListener('click', (e) => {
+    const g = geo();
+    if (state.session || stageMode !== 'print' || !pairActive(g)) return;
+    const r = el.printCv.getBoundingClientRect(), k = r.width / g.W;
+    const x = (e.clientX - r.left) / k, y = (e.clientY - r.top) / k;
+    const sl = g.slots.find((q) => x >= q.x && x <= q.x + q.w && y >= q.y && y <= q.y + q.h);
+    if (sl && pairs[sl.src]) flipPair(sl.src);
+  });
   el.fileInput.addEventListener('change', () => {
     const files = Array.from(el.fileInput.files || []).filter((f) => /^image\//.test(f.type) || /\.(jpe?g|png|webp|heic|heif|gif)$/i.test(f.name));
     el.fileInput.value = '';
@@ -2358,6 +2670,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
   const camPanel = buildPanel(el.panelCam, 'cam');
   const resPanel = buildPanel(el.panelRes, 'res');
   applyGlow();
+  loadPairs();
   buildSeg(el.segView, [['photo', 'รูป'], ['clip', 'คลิป']], 'photo', setView);
   buildThumbs();
   setStageMode('print');
@@ -2373,7 +2686,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
   setTimeout(checkUpdate, 1500);
 
   // ไว้ใช้ทดสอบ: ดูสถานะได้จาก DevTools
-  window.__photobooth = { CONFIG, state, GEO, LAYOUTS, STYLES, FILTERS, BORDERS, GLOWS, HAS_FX, APP_VERSION, geoFor };
+  window.__photobooth = { CONFIG, state, GEO, LAYOUTS, STYLES, FILTERS, BORDERS, GLOWS, HAS_FX, APP_VERSION, geoFor, pairs };
 })();
 </script>
 </body>
