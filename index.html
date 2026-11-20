@@ -385,7 +385,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
 
   /* เลขเวอร์ชัน: ทุกครั้งที่อัปเดต ให้เปลี่ยนตรงนี้และใน version.json ให้ตรงกัน
      ICON_VERSION: เพิ่มเมื่อเปลี่ยนไอคอน คนที่เพิ่มแอพไว้บนหน้าจอโฮมจะได้รับคำแนะนำให้เพิ่มใหม่ */
-  const APP_VERSION = '2.4.0';
+  const APP_VERSION = '2.5.0';
   const ICON_VERSION = 3;
 
   /* ---------- รูปแบบเฟรม ---------- */
@@ -1063,6 +1063,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
     glowCustom: pickValid(store.get('glowCustom', '#ff7eb3'), (v) => /^#[0-9a-f]{6}$/i.test(v), '#ff7eb3'),
     glowAmt: pickValid(store.get('glowAmt', 100), (v) => typeof v === 'number' && v >= 10 && v <= 100, 100),
     pairOn: store.get('pairOn', true) !== false,
+    pairSet: pickValid(store.get('pairSet', 0), (v) => v === 0 || v === 1, 0),
     flash: store.get('flash', false) === true,
     session: null,
     result: null,
@@ -1280,7 +1281,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
       P.rails.pair = root.querySelector('[data-rail="pair"]');
       P.pairSeg = root.querySelector('.seg-pair');
       P.pairHint = root.querySelector('.pair-hint');
-      buildSeg(P.pairSeg, [['off', 'ปิด'], ['on', 'เปิด']], state.pairOn ? 'on' : 'off', (v) => setPairOn(v === 'on'));
+      buildSeg(P.pairSeg, [['off', 'ปิด']].concat(PAIR_SETS.map((n, k) => [String(k), n])), pairSegVal(), (v) => (v === 'off' ? setPairOn(false) : setPairSet(+v)));
       P.pairSeg.insertAdjacentHTML('afterbegin', '<span class="seg-lbl" aria-hidden="true">ถ่ายคู่</span>');
     }
     root.querySelectorAll('[role="tab"]').forEach((b) => b.addEventListener('click', () => setTab(P, b.dataset.tab)));
@@ -1397,8 +1398,12 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
   /* ---------- ถ่ายคู่: รูปคนที่ไดคัทแล้ว (พื้นใส) ช่องละ 1 รูป เรียงตามลำดับ ----------
      รูปเก็บใน IndexedDB ของเครื่องนี้เท่านั้น ไม่อัปโหลด ไม่อยู่ใน repo */
   const MAX_PAIR = 9;
-  const pairs = new Array(MAX_PAIR).fill(null);   // { img, flip, blob }
+  const PAIR_SETS = ['แฟน1', 'แฟน2'];   // ชุดรูป แต่ละชุดมีช่อง 1..9 ของตัวเอง
+  const pairSets = PAIR_SETS.map(() => new Array(MAX_PAIR).fill(null));   // { img, flip, blob }
+  let pairs = pairSets[state.pairSet];
   let pairVer = 0, pairStart = 0;
+  const pairKey = (s, i) => (s ? `${s}:${i}` : i);   // ชุดแรกใช้คีย์ 0–8 เหมือน v2.4 รูปเดิมเลยอยู่ในแฟน1
+  const pairSegVal = () => (state.pairOn ? String(state.pairSet) : 'off');
   const pairDB = (() => {
     let dbp = null;
     const open = () => dbp || (dbp = new Promise((res, rej) => {
@@ -1452,7 +1457,103 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
     else ctx.drawImage(p.img, x + b.x, y + b.y, b.w, b.h);
     ctx.restore();
   }
-  // ย่อรูปใหญ่ ตัดขอบใสออก และดูว่ามีพื้นหลังโปร่งใสจริงไหม
+  // ล้างขอบขาวของรูปไดคัท: สีขอบที่ยังปนพื้นขาวเดิม → แทนด้วยสีเนื้อรูปข้างใน และลดความทึบตามสัดส่วนสีขาวที่ปน
+  // d = RGBA (Uint8ClampedArray / Uint8Array), แก้ในที่; คืนจำนวนพิกเซลที่แก้
+  function defringe(d, w, h) {
+    const N = w * h;
+    const R = Math.max(2, Math.min(6, Math.round(Math.max(w, h) / 300)));
+    // ระยะ (chamfer 5/7) จากพิกเซลที่ยังไม่ทึบเต็ม
+    const dist = new Uint16Array(N);
+    for (let p = 0; p < N; p++) dist[p] = d[p * 4 + 3] >= 250 ? 65535 : 0;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const p = y * w + x;
+        let v = dist[p];
+        if (!v) continue;
+        if (x > 0 && dist[p - 1] + 5 < v) v = dist[p - 1] + 5;
+        if (y > 0) {
+          const q = p - w;
+          if (dist[q] + 5 < v) v = dist[q] + 5;
+          if (x > 0 && dist[q - 1] + 7 < v) v = dist[q - 1] + 7;
+          if (x < w - 1 && dist[q + 1] + 7 < v) v = dist[q + 1] + 7;
+        }
+        dist[p] = v;
+      }
+    }
+    for (let y = h - 1; y >= 0; y--) {
+      for (let x = w - 1; x >= 0; x--) {
+        const p = y * w + x;
+        let v = dist[p];
+        if (!v) continue;
+        if (x < w - 1 && dist[p + 1] + 5 < v) v = dist[p + 1] + 5;
+        if (y < h - 1) {
+          const q = p + w;
+          if (dist[q] + 5 < v) v = dist[q] + 5;
+          if (x < w - 1 && dist[q + 1] + 7 < v) v = dist[q + 1] + 7;
+          if (x > 0 && dist[q - 1] + 7 < v) v = dist[q - 1] + 7;
+        }
+        dist[p] = v;
+      }
+    }
+    // เนื้อรูปข้างใน (ลึกเกิน R) เป็นสีอ้างอิง แล้วลามสีออกมาที่ขอบทีละชั้น
+    const coreD = R * 5;
+    const known = new Uint8Array(N);
+    const F = new Uint8Array(N * 3);
+    let front = [];
+    const queued = new Uint8Array(N);
+    for (let p = 0; p < N; p++) {
+      if (dist[p] > coreD) { known[p] = 1; F[p * 3] = d[p * 4]; F[p * 3 + 1] = d[p * 4 + 1]; F[p * 3 + 2] = d[p * 4 + 2]; }
+    }
+    const nb = (p, fn) => {
+      const x = p % w, y = (p - x) / w;
+      for (let dy = -1; dy <= 1; dy++) {
+        const yy = y + dy;
+        if (yy < 0 || yy >= h) continue;
+        for (let dx = -1; dx <= 1; dx++) {
+          const xx = x + dx;
+          if ((!dx && !dy) || xx < 0 || xx >= w) continue;
+          fn(yy * w + xx);
+        }
+      }
+    };
+    for (let p = 0; p < N; p++) {
+      if (known[p] || !d[p * 4 + 3]) continue;
+      let near = false;
+      nb(p, (q) => { if (known[q]) near = true; });
+      if (near) { front.push(p); queued[p] = 1; }
+    }
+    const maxIter = R * 6;
+    for (let it = 0; it < maxIter && front.length; it++) {
+      const vals = new Uint8Array(front.length * 3);
+      front.forEach((p, k) => {
+        let r = 0, g = 0, b = 0, n = 0;
+        nb(p, (q) => { if (known[q]) { r += F[q * 3]; g += F[q * 3 + 1]; b += F[q * 3 + 2]; n++; } });
+        if (n) { vals[k * 3] = r / n; vals[k * 3 + 1] = g / n; vals[k * 3 + 2] = b / n; }
+      });
+      front.forEach((p, k) => { known[p] = 1; F[p * 3] = vals[k * 3]; F[p * 3 + 1] = vals[k * 3 + 1]; F[p * 3 + 2] = vals[k * 3 + 2]; });
+      const next = [];
+      front.forEach((p) => nb(p, (q) => { if (!known[q] && !queued[q] && d[q * 4 + 3]) { queued[q] = 1; next.push(q); } }));
+      front = next;
+    }
+    // แยกสีขาวที่ปนออก: C = a·F + (1−a)·ขาว
+    let fixed = 0;
+    for (let p = 0; p < N; p++) {
+      const i = p * 4, A = d[i + 3];
+      if (!A || dist[p] > coreD || !known[p]) continue;
+      const fr = F[p * 3], fg = F[p * 3 + 1], fb = F[p * 3 + 2];
+      const er = fr - 255, eg = fg - 255, eb = fb - 255;
+      const den = er * er + eg * eg + eb * eb;
+      if (den < 900) continue; // สีเนื้อใกล้ขาวเกินไป (เช่นเสื้อขาว) แยกไม่ออก ปล่อยไว้
+      let a = ((d[i] - 255) * er + (d[i + 1] - 255) * eg + (d[i + 2] - 255) * eb) / den;
+      if (a >= 0.97 || (1 - a) * Math.sqrt(den) < 10) continue; // ปนขาวน้อยมาก ไม่ต้องแก้ (กันรูปที่ล้างแล้วโดนกินขอบซ้ำ)
+      if (a < 0) a = 0;
+      d[i] = fr; d[i + 1] = fg; d[i + 2] = fb;
+      d[i + 3] = Math.round(A * a);
+      fixed++;
+    }
+    return fixed;
+  }
+  // ย่อรูปใหญ่ ตัดขอบใสออก ดูว่ามีพื้นหลังโปร่งใสจริงไหม และล้างขอบขาว
   function prepPair(img) {
     const iw = img.naturalWidth, ih = img.naturalHeight;
     if (!iw || !ih) return null;
@@ -1462,8 +1563,8 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
     c.width = w; c.height = h;
     const x = c.getContext('2d');
     x.drawImage(img, 0, 0, w, h);
-    let d;
-    try { d = x.getImageData(0, 0, w, h).data; } catch (e) { return { canvas: c, alpha: true }; }
+    let id, d;
+    try { id = x.getImageData(0, 0, w, h); d = id.data; } catch (e) { return { canvas: c, alpha: true, fixed: 0 }; }
     let x0 = w, y0 = h, x1 = -1, y1 = -1, clear = 0;
     for (let yy = 0; yy < h; yy++) {
       const row = yy * w * 4;
@@ -1478,23 +1579,27 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
     }
     if (x1 < 0) return null;
     const alpha = clear > w * h * 0.02;
-    if (x0 === 0 && y0 === 0 && x1 === w - 1 && y1 === h - 1) return { canvas: c, alpha };
+    let fixed = 0;
+    if (alpha) {
+      try { fixed = defringe(d, w, h); if (fixed) x.putImageData(id, 0, 0); } catch (e) { fixed = 0; }
+    }
+    if (x0 === 0 && y0 === 0 && x1 === w - 1 && y1 === h - 1) return { canvas: c, alpha, fixed };
     const t = document.createElement('canvas');
     t.width = x1 - x0 + 1; t.height = y1 - y0 + 1;
     t.getContext('2d').drawImage(c, x0, y0, t.width, t.height, 0, 0, t.width, t.height);
     c.width = 0; c.height = 0;
-    return { canvas: t, alpha };
+    return { canvas: t, alpha, fixed };
   }
-  function savePair(i) {
-    const p = pairs[i];
-    (p ? pairDB.put(i, { blob: p.blob, flip: p.flip }) : pairDB.del(i)).catch(() => { /* เก็บไม่ได้ก็ใช้ได้แค่รอบนี้ */ });
+  function savePair(i, s = state.pairSet) {
+    const p = pairSets[s][i], k = pairKey(s, i);
+    (p ? pairDB.put(k, { blob: p.blob, flip: p.flip }) : pairDB.del(k)).catch(() => { /* เก็บไม่ได้ก็ใช้ได้แค่รอบนี้ */ });
   }
-  function setPair(i, p) {
-    const old = pairs[i];
+  function setPair(i, p, s = state.pairSet) {
+    const arr = pairSets[s], old = arr[i];
     if (old && old.img && old.img.src.indexOf('blob:') === 0) URL.revokeObjectURL(old.img.src);
-    pairs[i] = p;
+    arr[i] = p;
     pairVer++;
-    savePair(i);
+    savePair(i, s);
   }
   function pairsChanged() {
     pairVer++;
@@ -1513,9 +1618,17 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
     pairsChanged();
   }
   function setPairOn(on) {
+    if (state.session) return;
     state.pairOn = on;
     store.set('pairOn', on);
     pairsChanged();
+  }
+  function setPairSet(k) {
+    if (state.session || !pairSets[k]) return;
+    state.pairSet = k;
+    store.set('pairSet', k);
+    pairs = pairSets[k];
+    setPairOn(true);
   }
   function openPairPicker(i) {
     if (state.session) return;
@@ -1524,7 +1637,9 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
   }
   async function addPairs(files, start) {
     if (state.session) return;
-    let i = start, added = 0, flat = false;
+    const s = state.pairSet;
+    let i = start, added = 0, flat = false, cleaned = false;
+    if (files.length > 1) toast('กำลังใส่รูป…');
     for (const file of files) {
       if (i >= MAX_PAIR) break;
       const img = await loadImageFile(file);
@@ -1534,7 +1649,8 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
       const pimg = blob && (await blobImage(blob));
       if (!pimg) continue;
       if (!prep.alpha) flat = true;
-      setPair(i, { img: pimg, flip: false, blob });
+      if (prep.fixed > 200) cleaned = true;
+      setPair(i, { img: pimg, flip: false, blob }, s);
       i++; added++;
     }
     if (!added) { toast('เปิดรูปไม่ได้ ลองรูปอื่นนะ'); return; }
@@ -1543,22 +1659,25 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
     pairsChanged();
     track('pair-add');
     if (flat) toast('บางรูปยังมีพื้นหลังอยู่ ไดคัทก่อนจะเนียนกว่า');
+    else if (cleaned) toast('เก็บขอบขาวให้แล้ว');
   }
   async function loadPairs() {
-    for (let i = 0; i < MAX_PAIR; i++) {
-      try {
-        const v = await pairDB.get(i);
-        if (v && v.blob) {
-          const img = await blobImage(v.blob);
-          if (img) pairs[i] = { img, flip: !!v.flip, blob: v.blob };
-        }
-      } catch (e) { break; }
+    out: for (let s = 0; s < PAIR_SETS.length; s++) {
+      for (let i = 0; i < MAX_PAIR; i++) {
+        try {
+          const v = await pairDB.get(pairKey(s, i));
+          if (v && v.blob) {
+            const img = await blobImage(v.blob);
+            if (img) pairSets[s][i] = { img, flip: !!v.flip, blob: v.blob };
+          }
+        } catch (e) { break out; }
+      }
     }
     pairsChanged();
   }
   function renderPair(P) {
-    const g = geo(), key = [pairVer, g.id, state.border, state.pairOn].join('|');
-    syncSeg(P.pairSeg, state.pairOn ? 'on' : 'off');
+    const g = geo(), key = [pairVer, g.id, state.border, state.pairOn, state.pairSet].join('|');
+    syncSeg(P.pairSeg, pairSegVal());
     el.stage.classList.toggle('pairing', pairActive(g));
     if (P.pairKey === key) return;
     P.pairKey = key;
@@ -1610,7 +1729,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
       }
       rail.appendChild(card);
     }
-    P.pairHint.textContent = any ? 'แตะรูปเพื่อสลับซ้ายขวา' : 'ใส่รูปคนที่ไดคัทแล้ว (พื้นใส) ช่องละรูป';
+    P.pairHint.textContent = any ? 'แตะรูปเพื่อสลับซ้ายขวา' : `${PAIR_SETS[state.pairSet]} ยังว่าง ใส่รูปไดคัท (พื้นใส) ช่องละรูป`;
   }
 
   /* ---------- เรืองแสง ---------- */
@@ -2686,7 +2805,7 @@ body.glow-dark .thumbs li.now{box-shadow:inset 0 0 0 2px #fff;color:#fff}
   setTimeout(checkUpdate, 1500);
 
   // ไว้ใช้ทดสอบ: ดูสถานะได้จาก DevTools
-  window.__photobooth = { CONFIG, state, GEO, LAYOUTS, STYLES, FILTERS, BORDERS, GLOWS, HAS_FX, APP_VERSION, geoFor, pairs };
+  window.__photobooth = { CONFIG, state, GEO, LAYOUTS, STYLES, FILTERS, BORDERS, GLOWS, HAS_FX, APP_VERSION, geoFor, pairSets, get pairs() { return pairs; }, defringe };
 })();
 </script>
 </body>
